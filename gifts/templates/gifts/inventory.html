@@ -1,0 +1,60 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Return Gift Inventory · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=9">{% endblock %}
+
+{% block content %}
+<div class="page-head inventory-page-head">
+    <div><p class="eyebrow">Return Gifts</p><h1>Inventory & Stock History</h1><p class="lead">Every restock, issue, return and correction is recorded.</p></div>
+    <a class="btn btn-soft" href="{% url 'gifts:dashboard' %}">Back to Gifts</a>
+</div>
+
+<div class="inventory-summary-grid">
+    <article class="panel inventory-hero {% if inventory.is_low_stock %}inventory-low{% endif %}">
+        <div class="inventory-card-top"><p class="eyebrow">On Hand</p>{% if inventory.is_low_stock %}<span class="low-stock-pill">Low stock</span>{% endif %}</div>
+        <strong>{{ inventory.quantity_on_hand }}</strong><span>{{ settings_obj.return_gift_name|default:'Wedding Souvenir' }}</span>
+    </article>
+    <article class="panel inventory-mini"><span>Currently issued</span><strong>{{ current_issued }}</strong><small>Outstanding with guests</small></article>
+    <article class="panel inventory-mini"><span>Lifetime issued</span><strong>{{ lifetime_issued }}</strong><small>Includes later returns</small></article>
+    <article class="panel inventory-mini"><span>Low-stock alert</span><strong>{{ inventory.low_stock_threshold }}</strong><small>Warn at or below this level</small></article>
+</div>
+
+<div class="inventory-control-grid">
+    <section class="panel inventory-form-card">
+        <p class="eyebrow">Restock</p><h2>Add new stock</h2><p class="helper-copy">Use this when a new box or delivery of return gifts arrives.</p>
+        <form method="post" class="inventory-form">{% csrf_token %}<input type="hidden" name="action" value="restock">
+            <label><span>Quantity to add</span>{{ restock_form.quantity }}{% if restock_form.quantity.errors %}<small class="field-error">{{ restock_form.quantity.errors|striptags }}</small>{% endif %}</label>
+            <label><span>Note</span>{{ restock_form.note }}</label>
+            <button class="btn" type="submit">Add Stock</button>
+        </form>
+    </section>
+
+    <section class="panel inventory-form-card correction-card">
+        <p class="eyebrow">Correction</p><h2>Set exact current stock</h2><p class="helper-copy">For a physical recount. The difference is saved to history automatically.</p>
+        <form method="post" class="inventory-form">{% csrf_token %}<input type="hidden" name="action" value="set_stock">
+            <label><span>Current stock</span>{{ set_stock_form.quantity_on_hand }}</label>
+            <label><span>Low-stock threshold</span>{{ set_stock_form.low_stock_threshold }}</label>
+            <button class="btn btn-soft" type="submit">Save Exact Stock</button>
+        </form>
+    </section>
+</div>
+
+<section class="panel inventory-history-panel">
+    <div class="panel-head"><div><p class="eyebrow">Audit Trail</p><h2>Stock Movement History</h2></div><span class="soft-pill">Latest 100</span></div>
+    <div class="table-scroll">
+        <table class="movement-table">
+            <thead><tr><th>Time</th><th>Type</th><th>Guest</th><th>Change</th><th>Balance</th><th>Staff</th><th>Note</th></tr></thead>
+            <tbody>
+            {% for item in movements %}
+                <tr>
+                    <td>{{ item.created_at|date:'d M Y · g:i A' }}</td><td>{{ item.get_movement_type_display }}</td>
+                    <td>{% if item.guest %}<strong>{{ item.guest.name }}</strong><small class="table-note">{{ item.guest.public_id }}</small>{% else %}—{% endif %}</td>
+                    <td><span class="movement-delta {% if item.quantity_delta > 0 %}plus{% else %}minus{% endif %}">{% if item.quantity_delta > 0 %}+{% endif %}{{ item.quantity_delta }}</span></td>
+                    <td><strong>{{ item.quantity_after }}</strong></td><td>{% if item.created_by %}{{ item.created_by.get_full_name|default:item.created_by.username }}{% else %}System{% endif %}</td><td>{{ item.note|default:'—' }}</td>
+                </tr>
+            {% empty %}<tr><td colspan="7" class="empty-state">No stock activity yet.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

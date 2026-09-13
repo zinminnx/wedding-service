@@ -6,6 +6,7 @@ app_name = "checkins"
 
 urlpatterns = [
     path("dashboard/check-in/", views.dashboard, name="dashboard"),
+    path("dashboard/check-in/camera/", views.camera_scanner, name="camera_scanner"),
     path("reception/pass/<str:qr_token>/", views.scan, name="scan"),
     path("entry-qr/<str:qr_token>.svg", views.qr_image, name="qr_image"),
 ]

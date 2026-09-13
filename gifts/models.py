@@ -1,6 +1,8 @@
 import os
 import uuid
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -28,7 +30,6 @@ class GiftSettings(models.Model):
     allow_no_gift = models.BooleanField(default=True)
 
     # Legacy v6 fields retained so upgrading does not destroy existing data.
-    # The v6.2 UI uses GiftPaymentMethod instead.
     kbzpay_enabled = models.BooleanField(default=False)
     kbzpay_account_name = models.CharField(max_length=120, blank=True)
     kbzpay_qr = models.FileField(upload_to=gift_qr_upload_to, blank=True)
@@ -42,8 +43,13 @@ class GiftSettings(models.Model):
         default=ReturnGiftMode.PER_INVITATION,
     )
     return_gift_name = models.CharField(max_length=120, blank=True)
+
+    # Kept as a compatibility total. From v9 onward, the live quantity is stored
+    # in ReturnGiftInventory.quantity_on_hand and every change is ledgered.
     return_gift_stock = models.PositiveIntegerField(default=0)
     custom_return_gift_quantity = models.PositiveSmallIntegerField(default=1)
+    return_gift_requires_checkin = models.BooleanField(default=True)
+    return_gift_allow_staff_override = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -126,7 +132,6 @@ class GuestGiftDeclaration(models.Model):
         blank=True,
         related_name="declarations",
     )
-    # Snapshot/legacy label. Existing v6 values remain valid.
     payment_method = models.CharField(max_length=120, blank=True, default="")
     amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     payment_reference = models.CharField(max_length=120, blank=True)
@@ -172,3 +177,97 @@ class GuestGiftDeclaration(models.Model):
 
     def __str__(self):
         return f"{self.guest.name} - {self.get_gift_choice_display()}"
+
+
+class ReturnGiftInventory(models.Model):
+    wedding = models.OneToOneField(
+        "weddings.Wedding",
+        on_delete=models.CASCADE,
+        related_name="return_gift_inventory",
+    )
+    quantity_on_hand = models.PositiveIntegerField(default=0)
+    low_stock_threshold = models.PositiveIntegerField(default=10)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Return gift inventories"
+
+    @property
+    def is_low_stock(self):
+        return self.quantity_on_hand <= self.low_stock_threshold
+
+    def __str__(self):
+        return f"{self.wedding.name}: {self.quantity_on_hand} on hand"
+
+
+class ReturnGiftMovement(models.Model):
+    class MovementType(models.TextChoices):
+        OPENING = "OPENING", "Opening balance"
+        RESTOCK = "RESTOCK", "Stock added"
+        SET_STOCK = "SET_STOCK", "Stock corrected"
+        ISSUE = "ISSUE", "Issued to guest"
+        RETURN = "RETURN", "Returned to stock"
+
+    wedding = models.ForeignKey(
+        "weddings.Wedding",
+        on_delete=models.CASCADE,
+        related_name="return_gift_movements",
+    )
+    inventory = models.ForeignKey(
+        ReturnGiftInventory,
+        on_delete=models.CASCADE,
+        related_name="movements",
+    )
+    guest = models.ForeignKey(
+        "guests.Guest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="return_gift_movements",
+    )
+    checkin = models.ForeignKey(
+        "checkins.CheckIn",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="return_gift_movements",
+    )
+    movement_type = models.CharField(max_length=16, choices=MovementType.choices)
+    quantity_delta = models.IntegerField()
+    quantity_after = models.PositiveIntegerField()
+    note = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="return_gift_inventory_actions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["wedding", "created_at"], name="returngift_wed_time_idx"),
+        ]
+
+    def clean(self):
+        errors = {}
+        if self.inventory_id and self.wedding_id and self.inventory.wedding_id != self.wedding_id:
+            errors["inventory"] = "Inventory must belong to the same wedding."
+        if self.guest_id and self.wedding_id and self.guest.wedding_id != self.wedding_id:
+            errors["guest"] = "Guest must belong to the same wedding."
+        if self.checkin_id and self.wedding_id and self.checkin.wedding_id != self.wedding_id:
+            errors["checkin"] = "Check-in must belong to the same wedding."
+        if self.quantity_delta == 0:
+            errors["quantity_delta"] = "Inventory movement cannot be zero."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        sign = "+" if self.quantity_delta > 0 else ""
+        return f"{self.get_movement_type_display()} {sign}{self.quantity_delta}"

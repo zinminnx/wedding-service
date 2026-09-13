@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import GiftPaymentMethod, GiftSettings
+from .models import GiftPaymentMethod, GiftSettings, ReturnGiftInventory
 
 
 class GiftSettingsForm(forms.ModelForm):
@@ -12,12 +12,12 @@ class GiftSettingsForm(forms.ModelForm):
             "allow_no_gift",
             "return_gift_mode",
             "return_gift_name",
-            "return_gift_stock",
             "custom_return_gift_quantity",
+            "return_gift_requires_checkin",
+            "return_gift_allow_staff_override",
         ]
         widgets = {
             "return_gift_name": forms.TextInput(attrs={"placeholder": "e.g. Wedding souvenir"}),
-            "return_gift_stock": forms.NumberInput(attrs={"min": 0}),
             "custom_return_gift_quantity": forms.NumberInput(attrs={"min": 0, "max": 50}),
         }
 
@@ -64,3 +64,26 @@ class GiftPaymentMethodForm(forms.ModelForm):
         if method_type == GiftPaymentMethod.MethodType.BANK and not account_no:
             self.add_error("account_number", "Bank account number is required.")
         return cleaned
+
+
+class ReturnGiftRestockForm(forms.Form):
+    quantity = forms.IntegerField(
+        min_value=1,
+        max_value=100000,
+        widget=forms.NumberInput(attrs={"min": 1, "placeholder": "Quantity"}),
+    )
+    note = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={"placeholder": "Optional note, e.g. second delivery"}),
+    )
+
+
+class ReturnGiftSetStockForm(forms.ModelForm):
+    class Meta:
+        model = ReturnGiftInventory
+        fields = ["quantity_on_hand", "low_stock_threshold"]
+        widgets = {
+            "quantity_on_hand": forms.NumberInput(attrs={"min": 0}),
+            "low_stock_threshold": forms.NumberInput(attrs={"min": 0}),
+        }

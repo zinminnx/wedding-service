@@ -1,58 +1,30 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block title %}Check-in · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'checkins/css/checkins.css' %}?v=6">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'checkins/css/checkins.css' %}?v=9">{% endblock %}
 
 {% block content %}
 <div class="page-head checkin-page-head">
-    <div>
-        <p class="eyebrow">Reception</p>
-        <h1>Guest Check-in</h1>
-        <p class="lead">Scan an entrance QR or search for a guest manually.</p>
-    </div>
+    <div><p class="eyebrow">Reception</p><h1>Guest Check-in</h1><p class="lead">Scan an entrance QR or search for a guest manually.</p></div>
+    <a class="btn camera-launch" href="{% url 'checkins:camera_scanner' %}">Open Camera Scanner</a>
 </div>
 
 <div class="checkin-stats">
     <div><span>Invitations</span><strong>{{ counts.invitations }}</strong></div>
     <div><span>Checked-in people</span><strong>{{ counts.checked_in_people }}</strong></div>
     <div><span>Checked-in parties</span><strong>{{ counts.checked_in_parties }}</strong></div>
-    <div><span>Return gifts issued</span><strong>{{ counts.return_gifts }}</strong></div>
+    <div class="{% if counts.return_gift_low %}stock-alert{% endif %}"><span>Return gift stock</span><strong>{{ counts.return_gift_stock }}</strong><small>{{ counts.return_gifts }} issued{% if counts.return_gift_low %} · Low{% endif %}</small></div>
 </div>
 
 <div class="reception-grid">
-    <section class="panel scan-panel">
-        <p class="eyebrow">QR Check-in</p>
-        <h2>Scan with the staff phone camera</h2>
-        <div class="scan-visual"><span>⌁</span><b>Entrance QR</b><small>The QR opens a secure reception page for the matching invitation.</small></div>
-        <p class="scan-note">For local testing, scan links point to this computer's localhost address. On the live domain/VPS, the same QR flow works from staff phones.</p>
-    </section>
-
-    <section class="panel manual-search-panel">
-        <p class="eyebrow">Manual Search</p>
-        <h2>Guest forgot the QR?</h2>
-        <form method="get" class="checkin-search"><input name="q" value="{{ q }}" placeholder="Name, phone or guest ID"><button class="btn" type="submit">Search</button></form>
-        <p class="helper-copy">Search a guest and open their reception pass manually.</p>
-    </section>
+    <section class="panel scan-panel"><p class="eyebrow">Fast Lane</p><h2>Scan with the reception phone</h2><div class="scan-visual"><span>⌁</span><b>Camera QR Scanner</b><small>Use the rear camera to read the guest's secure entrance QR.</small></div><a class="btn scanner-cta" href="{% url 'checkins:camera_scanner' %}">Start Scanning</a><p class="scan-note">Camera access requires HTTPS on a phone. It also works on localhost when the browser is running on the same device.</p></section>
+    <section class="panel manual-search-panel"><p class="eyebrow">Manual Search</p><h2>Guest forgot the QR?</h2><form method="get" class="checkin-search"><input name="q" value="{{ q }}" placeholder="Name, phone or guest ID"><button class="btn" type="submit">Search</button></form><p class="helper-copy">Search a guest and open their reception pass manually.</p>{% if recent_checkins %}<div class="recent-checkins"><div class="recent-title"><strong>Recent arrivals</strong><span>Live</span></div>{% for item in recent_checkins|slice:':4' %}<div class="recent-row"><div><b>{{ item.guest.name }}</b><small>{{ item.checked_in_count }} person{{ item.checked_in_count|pluralize }}</small></div><time>{{ item.checked_in_at|date:'g:i A' }}</time></div>{% endfor %}</div>{% endif %}</section>
 </div>
 
 <section class="panel checkin-list-panel">
-    <div class="panel-head"><div><p class="eyebrow">Guest List</p><h2>Reception Queue</h2></div></div>
-    <div class="table-scroll">
-        <table>
-            <thead><tr><th>Guest</th><th>Party limit</th><th>Invitation</th><th>Check-in</th><th>Return gift</th><th>Action</th></tr></thead>
-            <tbody>
-                {% for row in rows %}
-                <tr>
-                    <td><strong>{{ row.guest.name }}</strong><small class="table-note">{{ row.guest.phone|default:row.guest.public_id }}</small></td>
-                    <td>{{ row.guest.allowed_party_size }}</td>
-                    <td>{{ row.invitation.get_status_display }}</td>
-                    <td>{% if row.checkin and row.checkin.checked_in_count %}<span class="good-chip">{{ row.checkin.checked_in_count }} checked in</span>{% else %}<span class="muted">Not yet</span>{% endif %}</td>
-                    <td>{% if row.checkin and row.checkin.return_gift_quantity %}<span class="gold-chip">{{ row.checkin.return_gift_quantity }} issued</span>{% else %}<span class="muted">Pending</span>{% endif %}</td>
-                    <td><a class="row-action" href="{% url 'checkins:scan' row.invitation.qr_token %}">Open pass →</a></td>
-                </tr>
-                {% empty %}<tr><td colspan="6" class="empty-state">No invitations found.</td></tr>{% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <div class="panel-head"><div><p class="eyebrow">Guest List</p><h2>Reception Queue</h2></div>{% if q %}<a class="text-link" href="{% url 'checkins:dashboard' %}">Clear search</a>{% endif %}</div>
+    <div class="table-scroll"><table><thead><tr><th>Guest</th><th>Party limit</th><th>Invitation</th><th>Check-in</th><th>Return gift</th><th>Action</th></tr></thead><tbody>
+    {% for row in rows %}<tr><td><strong>{{ row.guest.name }}</strong><small class="table-note">{{ row.guest.phone|default:row.guest.public_id }}</small></td><td>{{ row.guest.allowed_party_size }}</td><td>{{ row.invitation.get_status_display }}</td><td>{% if row.checkin and row.checkin.checked_in_count %}<span class="good-chip">{{ row.checkin.checked_in_count }} checked in</span>{% else %}<span class="muted">Not yet</span>{% endif %}</td><td>{% if row.checkin and row.checkin.return_gift_quantity %}<span class="gold-chip">{{ row.checkin.return_gift_quantity }} issued</span>{% else %}<span class="muted">Pending</span>{% endif %}</td><td><a class="row-action" href="{% url 'checkins:scan' row.invitation.qr_token %}">Open pass →</a></td></tr>{% empty %}<tr><td colspan="6" class="empty-state">No invitations found.</td></tr>{% endfor %}
+    </tbody></table></div>
 </section>
 {% endblock %}

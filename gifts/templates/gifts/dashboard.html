@@ -1,22 +1,23 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block title %}Gifts · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=6.2">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=9">{% endblock %}
 
 {% block content %}
 <div class="page-head gift-page-head">
     <div>
         <p class="eyebrow">Wedding Gifts</p>
         <h1>Gifts & Return Gifts</h1>
-        <p class="lead">Add any Mobile Pay or bank account you want. Nothing is fixed to KBZPay or AYA Pay.</p>
+        <p class="lead">Flexible payment methods, return-gift rules, and tracked inventory in one place.</p>
     </div>
+    <a class="btn btn-soft" href="{% url 'gifts:inventory' %}">Inventory & History</a>
 </div>
 
 <div class="gift-stats">
     <div class="gift-stat"><span>Declarations</span><strong>{{ counts.total }}</strong><small>Guests who selected an option</small></div>
     <div class="gift-stat"><span>Digital</span><strong>{{ counts.digital }}</strong><small>{{ counts.guest_sent }} awaiting verification</small></div>
     <div class="gift-stat"><span>Verified</span><strong>{{ counts.verified }}</strong><small>Confirmed payments</small></div>
-    <div class="gift-stat"><span>Return gifts</span><strong>{{ return_gift.remaining }}</strong><small>{{ return_gift.issued }} issued of {{ return_gift.stock }}</small></div>
+    <div class="gift-stat {% if return_gift.low %}is-low{% endif %}"><span>Return gift stock</span><strong>{{ return_gift.stock }}</strong><small>{{ return_gift.issued }} currently issued{% if return_gift.low %} · Low stock{% endif %}</small></div>
 </div>
 
 <div class="gift-layout">
@@ -32,25 +33,30 @@
             {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
 
             <div class="toggle-grid">
-                <label class="toggle-card">{{ form.accept_monetary_gift }}<span><b>Money gifts</b><small>Show your saved payment methods.</small></span></label>
+                <label class="toggle-card">{{ form.accept_monetary_gift }}<span><b>Money gifts</b><small>Show enabled Pay and Bank methods.</small></span></label>
                 <label class="toggle-card">{{ form.accept_physical_gift }}<span><b>Physical gifts</b><small>Guests may bring a gift.</small></span></label>
                 <label class="toggle-card">{{ form.allow_no_gift }}<span><b>No gift option</b><small>Make it clear gifts are optional.</small></span></label>
             </div>
 
             <div class="soft-divider"></div>
-            <div class="return-grid">
+            <div class="section-title-row compact-row">
+                <div><p class="eyebrow">Return Gift Rules</p><h3>Eligibility & issue policy</h3></div>
+                <a class="text-link" href="{% url 'gifts:inventory' %}">Manage stock →</a>
+            </div>
+            <div class="return-grid return-grid-v9">
                 <label><span>Return gift rule</span>{{ form.return_gift_mode }}</label>
                 <label><span>Gift name</span>{{ form.return_gift_name }}</label>
-                <label><span>Total stock</span>{{ form.return_gift_stock }}</label>
-                <label><span>Custom qty</span>{{ form.custom_return_gift_quantity }}</label>
+                <label><span>Custom qty</span>{{ form.custom_return_gift_quantity }}<small>Used only when rule is Custom.</small></label>
+                <label class="rule-check">{{ form.return_gift_requires_checkin }}<span><b>Require check-in first</b><small>Recommended for reception control.</small></span></label>
+                <label class="rule-check">{{ form.return_gift_allow_staff_override }}<span><b>Allow quantity override</b><small>Reception can change the suggested quantity.</small></span></label>
             </div>
-            <p class="helper-copy">Wedding gift and return gift stay independent. A guest can choose “No gift” and still use the entrance pass and receive a return gift.</p>
+            <p class="helper-copy">Wedding gifts and return gifts remain independent. A guest may choose “No gift” and still enter and receive a return gift according to these rules.</p>
             <div class="form-actions"><button class="btn" type="submit">Save Gift Settings</button></div>
         </form>
 
         <div class="soft-divider"></div>
         <div class="section-title-row method-title-row">
-            <div><p class="eyebrow">Flexible Payment Methods</p><h2>Your payment accounts</h2><p class="helper-copy compact">Add as many Pay or Bank methods as you need.</p></div>
+            <div><p class="eyebrow">Flexible Payment Methods</p><h2>Your payment accounts</h2><p class="helper-copy compact">Add as many Mobile Pay or Bank methods as you need.</p></div>
         </div>
 
         <div class="method-list">
@@ -60,11 +66,7 @@
                 <div class="method-main">
                     <div class="method-name-row"><strong>{{ method.name }}</strong><span class="method-type">{{ method.get_method_type_display }}</span>{% if not method.is_enabled %}<span class="method-off">Disabled</span>{% endif %}</div>
                     <span>{{ method.account_name }}</span>
-                    {% if method.method_type == 'PAY' %}
-                        <small>{% if method.phone_number %}{{ method.phone_number }}{% else %}QR only{% endif %}</small>
-                    {% else %}
-                        <small>Account No. {{ method.account_number }}</small>
-                    {% endif %}
+                    {% if method.method_type == 'PAY' %}<small>{% if method.phone_number %}{{ method.phone_number }}{% else %}QR only{% endif %}</small>{% else %}<small>Account No. {{ method.account_number }}</small>{% endif %}
                 </div>
                 {% if method.qr_image %}<img class="method-qr-thumb" src="{{ method.qr_image.url }}" alt="{{ method.name }} QR">{% endif %}
                 <div class="method-actions">
@@ -101,14 +103,17 @@
         </form>
     </section>
 
-    <aside class="panel inventory-card">
-        <p class="eyebrow">Return Gift Inventory</p>
+    <aside class="panel inventory-card {% if return_gift.low %}inventory-low{% endif %}">
+        <div class="inventory-card-top"><p class="eyebrow">Return Gift Inventory</p>{% if return_gift.low %}<span class="low-stock-pill">Low stock</span>{% endif %}</div>
         <h2>{{ settings_obj.return_gift_name|default:'Wedding Souvenir' }}</h2>
-        <div class="inventory-number">{{ return_gift.remaining }}</div>
-        <span>remaining</span>
-        <div class="inventory-bar"><i style="width:{% if return_gift.stock %}{% widthratio return_gift.issued return_gift.stock 100 %}{% else %}0{% endif %}%"></i></div>
-        <div class="inventory-facts"><div><span>Stock</span><strong>{{ return_gift.stock }}</strong></div><div><span>Issued</span><strong>{{ return_gift.issued }}</strong></div></div>
-        <a class="btn btn-soft full-btn" href="{% url 'checkins:dashboard' %}">Open Reception Check-in</a>
+        <div class="inventory-number">{{ return_gift.stock }}</div>
+        <span>currently on hand</span>
+        <div class="inventory-facts"><div><span>Issued now</span><strong>{{ return_gift.issued }}</strong></div><div><span>Alert at</span><strong>{{ return_gift.threshold }}</strong></div></div>
+        <a class="btn full-btn" href="{% url 'gifts:inventory' %}">Manage Inventory</a>
+        <a class="btn btn-soft full-btn second-btn" href="{% url 'checkins:dashboard' %}">Open Reception</a>
+        {% if recent_movements %}
+        <div class="mini-history"><strong>Recent stock activity</strong>{% for movement in recent_movements|slice:':4' %}<div><span>{{ movement.get_movement_type_display }}</span><b class="{% if movement.quantity_delta > 0 %}plus{% else %}minus{% endif %}">{% if movement.quantity_delta > 0 %}+{% endif %}{{ movement.quantity_delta }}</b></div>{% endfor %}</div>
+        {% endif %}
     </aside>
 </div>
 
@@ -121,24 +126,11 @@
             {% for item in declarations %}
                 <tr>
                     <td><strong>{{ item.guest.name }}</strong><small class="table-note">{{ item.updated_at|date:'d M · g:i A' }}</small></td>
-                    <td>{{ item.get_gift_choice_display }}</td>
-                    <td>{{ item.payment_method_label }}</td>
-                    <td>{% if item.amount %}{{ item.amount }}{% else %}—{% endif %}</td>
-                    <td><span class="payment-status status-{{ item.payment_status|lower }}">{{ item.get_payment_status_display }}</span></td>
-                    <td>{{ item.payment_reference|default:'—' }}</td>
-                    <td>
-                        {% if item.gift_choice == 'DIGITAL' %}
-                            <form class="inline-actions" method="post" action="{% url 'gifts:declaration_action' item.id %}">{% csrf_token %}
-                                {% if item.payment_status != 'VERIFIED' %}<button name="action" value="verify">Verify</button>{% endif %}
-                                {% if item.payment_status != 'REJECTED' %}<button class="danger" name="action" value="reject">Reject</button>{% endif %}
-                                {% if item.payment_status == 'VERIFIED' or item.payment_status == 'REJECTED' %}<button name="action" value="reset">Reset</button>{% endif %}
-                            </form>
-                        {% else %}—{% endif %}
-                    </td>
+                    <td>{{ item.get_gift_choice_display }}</td><td>{{ item.payment_method_label }}</td><td>{% if item.amount %}{{ item.amount }}{% else %}—{% endif %}</td>
+                    <td><span class="payment-status status-{{ item.payment_status|lower }}">{{ item.get_payment_status_display }}</span></td><td>{{ item.payment_reference|default:'—' }}</td>
+                    <td>{% if item.gift_choice == 'DIGITAL' %}<form class="inline-actions" method="post" action="{% url 'gifts:declaration_action' item.id %}">{% csrf_token %}{% if item.payment_status != 'VERIFIED' %}<button name="action" value="verify">Verify</button>{% endif %}{% if item.payment_status != 'REJECTED' %}<button class="danger" name="action" value="reject">Reject</button>{% endif %}{% if item.payment_status == 'VERIFIED' or item.payment_status == 'REJECTED' %}<button name="action" value="reset">Reset</button>{% endif %}</form>{% else %}—{% endif %}</td>
                 </tr>
-            {% empty %}
-                <tr><td colspan="7" class="empty-state">No guest gift declarations yet.</td></tr>
-            {% endfor %}
+            {% empty %}<tr><td colspan="7" class="empty-state">No guest gift declarations yet.</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
