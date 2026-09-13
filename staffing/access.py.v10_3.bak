@@ -2,7 +2,7 @@ from django.db.models import Q
 
 from weddings.models import Wedding
 
-from .models import WeddingStaffMembership, WeddingWorkspacePreference
+from .models import WeddingStaffMembership
 
 
 PERM_VIEW_DASHBOARD = "view_dashboard"
@@ -79,44 +79,8 @@ def accessible_weddings(user, permission=None):
     return qs.filter(query).distinct()
 
 
-def _preferred_wedding(user):
-    """Return the user's selected workspace, or the latest accessible workspace."""
-    if not getattr(user, "is_authenticated", False):
-        return None
-
-    preference = WeddingWorkspacePreference.objects.filter(user=user).only("active_wedding_id").first()
-    if preference and preference.active_wedding_id:
-        selected = accessible_weddings(user).filter(pk=preference.active_wedding_id).first()
-        if selected:
-            return selected
-
-    return accessible_weddings(user).order_by("-created_at").first()
-
-
 def get_wedding_for_user(user, permission=None):
-    """
-    Return the selected wedding workspace.
-
-    A permission check never silently jumps to a different wedding. This is important
-    for tenant isolation: if the selected workspace does not grant the requested
-    permission, callers receive None instead of data from another wedding.
-    """
-    wedding = _preferred_wedding(user)
-    if wedding is None:
-        return None
-    if permission and not has_wedding_permission(user, wedding, permission):
-        return None
-    return wedding
-
-
-def set_active_wedding(user, wedding):
-    if not getattr(user, "is_authenticated", False):
-        return None
-    preference, _ = WeddingWorkspacePreference.objects.update_or_create(
-        user=user,
-        defaults={"active_wedding": wedding},
-    )
-    return preference
+    return accessible_weddings(user, permission).order_by("-created_at").first()
 
 
 def get_user_wedding_role(user, wedding):

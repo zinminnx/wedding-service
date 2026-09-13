@@ -71,11 +71,6 @@ class Wedding(models.Model):
         default="Asia/Yangon",
     )
 
-    wedding_location = models.CharField(max_length=255, blank=True)
-
-    google_maps_url = models.URLField(max_length=1000, blank=True)
-
-
     guest_limit = models.PositiveIntegerField(
         default=100,
     )

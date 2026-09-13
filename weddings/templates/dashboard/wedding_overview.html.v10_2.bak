@@ -150,30 +150,6 @@
                     </div>
                 </div>
 
-                <div class="venue-card">
-                    <div class="venue-card-head">
-                        <div><span class="venue-pin">⌖</span><div><strong>Wedding venue</strong><p>Tell guests where the ceremony or reception will take place.</p></div></div>
-                    </div>
-                    <div class="premium-form-grid two-col venue-fields">
-                        <div class="field-wrap">
-                            <label for="{{ form.wedding_location.id_for_label }}">Wedding Location</label>
-                            {{ form.wedding_location }}
-                            <small>Venue name and area, e.g. Novotel Yangon Max, Yangon.</small>
-                            {{ form.wedding_location.errors }}
-                        </div>
-                        <div class="field-wrap">
-                            <label for="{{ form.google_maps_url.id_for_label }}">Google Maps Location</label>
-                            {{ form.google_maps_url }}
-                            <small>Google Maps → Share → Copy link, then paste it here.</small>
-                            {{ form.google_maps_url.errors }}
-                        </div>
-                    </div>
-                    <div class="venue-map-preview" id="venue-map-preview"{% if not wedding.google_maps_url %} hidden{% endif %}>
-                        <span>Map link ready</span>
-                        <a id="venue-map-link" href="{{ wedding.google_maps_url|default:'#' }}" target="_blank" rel="noopener noreferrer">Open Google Maps ↗</a>
-                    </div>
-                </div>
-
                 <div class="timezone-card">
                     <div><span class="timezone-icon">⌖</span><div><strong>Event timezone</strong><p>All invitations, RSVP deadlines and check-in timestamps use this timezone.</p></div></div>
                     <div class="field-wrap">
@@ -242,7 +218,6 @@
                         <div><small>Wedding</small><b id="review-name">{{ wedding.name|default:'Not set' }}</b></div>
                         <div><small>Couple</small><b id="review-couple">{{ wedding.groom_name|default:'Groom' }} & {{ wedding.bride_name|default:'Bride' }}</b></div>
                         <div><small>Wedding date</small><b id="review-date">{% if wedding.wedding_date %}{{ wedding.wedding_date|date:'M d, Y · g:i A' }}{% else %}Not set{% endif %}</b></div>
-                        <div><small>Venue</small><b id="review-location">{{ wedding.wedding_location|default:'Not set' }}</b></div>
                         <div><small>Guest capacity</small><b><span id="review-guests">{{ wedding.guest_limit|default:'100' }}</span> seats</b></div>
                         <div><small>Photo capacity</small><b><span id="review-photos">{{ wedding.photo_limit|default:'100' }}</span> photos</b></div>
                         <div><small>Print capacity</small><b><span id="review-prints">{{ wedding.print_limit|default:'0' }}</span> prints</b></div>
@@ -281,8 +256,6 @@
                 <div><span>◇</span><b>Wedding</b><em id="preview-name">{{ wedding.name|default:'Your Wedding' }}</em></div>
                 <div><span>♡</span><b>Couple</b><em id="preview-couple">{{ wedding.groom_name|default:'Groom' }} & {{ wedding.bride_name|default:'Bride' }}</em></div>
                 <div><span>□</span><b>Wedding Date</b><em id="preview-datetime">{% if wedding.wedding_date %}{{ wedding.wedding_date|date:'M d, Y · g:i A' }}{% else %}Not set yet{% endif %}</em></div>
-                <div><span>⌖</span><b>Venue</b><em id="preview-location">{{ wedding.wedding_location|default:'Not set' }}</em></div>
-                <div id="preview-map-row"{% if not wedding.google_maps_url %} hidden{% endif %}><span>↗</span><b>Google Maps</b><em><a id="preview-map-link" href="{{ wedding.google_maps_url|default:'#' }}" target="_blank" rel="noopener noreferrer">Open map</a></em></div>
                 <div><span>⌖</span><b>Timezone</b><em id="preview-timezone">{{ wedding.timezone|default:'Asia/Yangon' }}</em></div>
                 <div><span>↗</span><b>Invitation URL</b><em>/w/<span id="preview-slug">{{ wedding.slug|default:'your-wedding' }}</span></em></div>
                 <div><span>♙</span><b>Guest Limit</b><em><span id="preview-guests">{{ wedding.guest_limit|default:'100' }}</span> guests</em></div>
@@ -301,5 +274,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'weddings/js/wedding-editor.js' %}?v=10.2"></script>
+<script src="{% static 'weddings/js/wedding-editor.js' %}?v=10.1"></script>
 {% endblock %}

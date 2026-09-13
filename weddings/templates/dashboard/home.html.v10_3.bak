@@ -7,15 +7,12 @@
         <h1>Good evening, {{ request.user.first_name|default:request.user.username }}</h1>
         <p class="lead">Everything is coming together beautifully.</p>
     </div>
-    <div class="dashboard-hero-actions">
-        {% if can_create_wedding %}<a class="btn btn-soft" href="{% url 'weddings:create' %}">＋ New wedding</a>{% endif %}
-        {% if wedding %}
-        <div class="countdown-card">
-            <span class="countdown-label">Wedding date</span>
-            <strong>{{ wedding.wedding_date|date:'d F Y'|default:'Not set yet' }}</strong>
-        </div>
-        {% endif %}
+    {% if wedding %}
+    <div class="countdown-card">
+        <span class="countdown-label">Wedding date</span>
+        <strong>{{ wedding.wedding_date|date:'d F Y'|default:'Not set yet' }}</strong>
     </div>
+    {% endif %}
 </div>
 
 <div class="stats-grid">
@@ -27,19 +24,18 @@
 
 <div class="dashboard-grid">
     <section class="panel feature-panel">
-        <div class="panel-head"><div><p class="eyebrow">Current wedding</p><h2>{{ wedding.name|default:'Create your first wedding' }}</h2></div><div class="panel-head-actions"><a class="text-link" href="{% url 'weddings:list' %}">All weddings</a>{% if wedding %}<a class="btn btn-soft" href="{% url 'weddings:overview' %}">View details</a>{% endif %}</div></div>
+        <div class="panel-head"><div><p class="eyebrow">Your wedding</p><h2>{{ wedding.name|default:'Create your first wedding' }}</h2></div><a class="btn btn-soft" href="{% url 'weddings:overview' %}">View details</a></div>
         {% if wedding %}
         <div class="feature-visual"><div class="photo-placeholder"><span>{{ wedding.groom_name|default:'Groom' }} & {{ wedding.bride_name|default:'Bride' }}</span></div></div>
         <div class="detail-row"><span>Date</span><strong>{{ wedding.wedding_date|date:'D, d M Y · g:i A'|default:'Not set' }}</strong></div>
-        {% if wedding.wedding_location %}<div class="detail-row"><span>Venue</span><strong>{{ wedding.wedding_location }}</strong></div>{% endif %}
         <div class="detail-row"><span>Expires</span><strong>{{ wedding.expire_date|date:'d M Y'|default:'Not set' }}</strong></div>
         {% else %}
-        <div class="empty-wedding-cta"><p class="muted">No wedding workspace exists yet.</p>{% if can_create_wedding %}<a class="btn btn-primary-large" href="{% url 'weddings:create' %}">Create your first wedding →</a>{% endif %}</div>
+        <p class="muted">No wedding workspace exists yet.</p>
         {% endif %}
     </section>
 
     <section class="panel">
-        <div class="panel-head"><div><p class="eyebrow">Recent activity</p><h2>Latest guests</h2></div>{% if wedding %}<a class="text-link" href="{% url 'guests:list' %}">View all</a>{% endif %}</div>
+        <div class="panel-head"><div><p class="eyebrow">Recent activity</p><h2>Latest guests</h2></div><a class="text-link" href="{% url 'guests:list' %}">View all</a></div>
         <div class="activity-list">
             {% for guest in recent_guests %}
             <div class="activity-item"><div class="avatar small">{{ guest.name|slice:':1'|upper }}</div><div><strong>{{ guest.name }}</strong><span>{{ guest.group.name|default:'Guest' }} · Party of {{ guest.allowed_party_size }}</span></div></div>
@@ -50,15 +46,13 @@
     </section>
 </div>
 
-{% if wedding %}
 <section class="panel quick-panel">
     <div class="panel-head"><div><p class="eyebrow">Quick actions</p><h2>Keep planning</h2></div></div>
     <div class="quick-grid">
         <a href="{% url 'guests:list' %}">Manage guests</a>
         <a href="{% url 'invitations:list' %}">View invitations</a>
         <a href="{% url 'rsvp:list' %}">Review RSVP</a>
-        <a href="{% url 'checkins:dashboard' %}">Reception check-in</a>
+        <a class="disabled" href="#">Reception check-in</a>
     </div>
 </section>
-{% endif %}
 {% endblock %}

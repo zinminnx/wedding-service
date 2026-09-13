@@ -31,8 +31,6 @@
     const dateInput = field('wedding_date');
     const expireInput = field('expire_date');
     const timezoneInput = field('timezone');
-    const locationInput = field('wedding_location');
-    const mapInput = field('google_maps_url');
     const statusInput = field('status');
     const guestInput = field('guest_limit');
     const photoInput = field('photo_limit');
@@ -82,18 +80,6 @@
         if (byId('couple-preview-bride')) byId('couple-preview-bride').textContent = bride;
         if (byId('preview-slug')) byId('preview-slug').textContent = (slugInput && slugInput.value) || 'your-wedding';
         if (byId('preview-timezone')) byId('preview-timezone').textContent = (timezoneInput && timezoneInput.value) || 'Asia/Yangon';
-        const location = (locationInput && locationInput.value.trim()) || 'Not set';
-        const mapUrl = (mapInput && mapInput.value.trim()) || '';
-        if (byId('preview-location')) byId('preview-location').textContent = location;
-        if (byId('review-location')) byId('review-location').textContent = location;
-        const mapRow = byId('preview-map-row');
-        const mapLink = byId('preview-map-link');
-        const venueMapPreview = byId('venue-map-preview');
-        const venueMapLink = byId('venue-map-link');
-        if (mapRow) mapRow.hidden = !mapUrl;
-        if (venueMapPreview) venueMapPreview.hidden = !mapUrl;
-        if (mapLink) mapLink.href = mapUrl || '#';
-        if (venueMapLink) venueMapLink.href = mapUrl || '#';
         if (byId('preview-status')) byId('preview-status').textContent = status;
         if (byId('preview-guests') && guestInput) byId('preview-guests').textContent = guestInput.value || '0';
         if (byId('preview-photos') && photoInput) byId('preview-photos').textContent = photoInput.value || '0';
@@ -219,7 +205,7 @@
         });
     }
 
-    [brideInput, groomInput, startInput, dateInput, expireInput, timezoneInput, locationInput, mapInput, statusInput, guestInput, photoInput, printInput]
+    [brideInput, groomInput, startInput, dateInput, expireInput, timezoneInput, statusInput, guestInput, photoInput, printInput]
         .filter(Boolean)
         .forEach((input) => {
             input.addEventListener('input', function () {

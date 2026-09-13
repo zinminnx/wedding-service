@@ -51,22 +51,3 @@ class WeddingStaffMembership(models.Model):
 
     def __str__(self):
         return f"{self.wedding} - {self.user} ({self.get_role_display()})"
-
-class WeddingWorkspacePreference(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="wedding_workspace_preference",
-    )
-    active_wedding = models.ForeignKey(
-        "weddings.Wedding",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.user} -> {self.active_wedding or 'No wedding selected'}"
-

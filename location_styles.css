@@ -1,0 +1,33 @@
+/* EverAfter v10.2 - Wedding Location + Google Maps */
+.venue-card {
+    margin: 22px 0;
+    padding: 22px;
+    border: 1px solid rgba(184, 137, 65, .24);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(250, 247, 241, .96), rgba(255, 255, 255, .98));
+}
+.venue-card-head > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.venue-card-head strong { display:block; font-size: 1rem; color:#102338; }
+.venue-card-head p { margin: 4px 0 0; color:#748091; font-size:.88rem; }
+.venue-pin {
+    width: 36px; height: 36px; border-radius: 50%; display:grid; place-items:center;
+    background:#f5e9d4; color:#a46d21; font-weight:700; flex:0 0 auto;
+}
+.venue-fields { margin-top: 18px; }
+.venue-map-preview {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+    background: rgba(183, 132, 55, .08); display:flex; align-items:center; justify-content:space-between; gap:12px;
+    font-size:.86rem;
+}
+.venue-map-preview[hidden] { display:none; }
+.venue-map-preview span { color:#6f7886; }
+.venue-map-preview a, #preview-map-link { color:#9a651f; font-weight:700; text-decoration:none; }
+.venue-map-preview a:hover, #preview-map-link:hover { text-decoration:underline; }
+@media (max-width: 720px) {
+    .venue-card { padding: 17px; }
+    .venue-map-preview { align-items:flex-start; flex-direction:column; }
+}

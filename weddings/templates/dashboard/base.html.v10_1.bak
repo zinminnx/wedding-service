@@ -1,13 +1,12 @@
 {% load static staffing_tags %}
 {% wedding_access request.user wedding as access %}
-{% wedding_choices request.user as wedding_choices %}
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}EverAfter{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=10.3">
+    <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=7">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -22,7 +21,7 @@
             <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'weddings' %}active{% endif %}" href="{% url 'weddings:dashboard' %}">Dashboard</a>
 
             {% if access.manage_wedding or access.can_create_wedding %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'list' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'create' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'weddings:list' %}">My Weddings</a>
+            <a class="nav-item {% if request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'weddings:overview' %}">My Wedding</a>
             {% endif %}
 
             {% if access.view_guests %}
@@ -62,42 +61,9 @@
             <div class="search-box">Search guests, invitations, photos...</div>
             <div class="topbar-right">
                 {% if wedding %}
-                    <details class="workspace-switcher">
-                        <summary class="wedding-switcher">
-                            <span class="switcher-dot"></span>
-                            <div><small>{{ access.role_label }}</small><strong>{{ wedding.name }}</strong></div>
-                            <span class="switcher-chevron">⌄</span>
-                        </summary>
-                        <div class="workspace-menu">
-                            <div class="workspace-menu-head">
-                                <span>Wedding workspaces</span>
-                                <a href="{% url 'weddings:list' %}">Manage</a>
-                            </div>
-                            <div class="workspace-menu-list">
-                                {% for item in wedding_choices %}
-                                    {% if item.pk == wedding.pk %}
-                                    <div class="workspace-choice current">
-                                        <span class="workspace-choice-mark">✓</span>
-                                        <div><strong>{{ item.name }}</strong><small>{{ item.get_status_display }}{% if item.wedding_date %} · {{ item.wedding_date|date:'d M Y' }}{% endif %}</small></div>
-                                    </div>
-                                    {% else %}
-                                    <form method="post" action="{% url 'weddings:switch' item.public_id %}">
-                                        {% csrf_token %}
-                                        <button class="workspace-choice" type="submit">
-                                            <span class="workspace-choice-mark">◇</span>
-                                            <div><strong>{{ item.name }}</strong><small>{{ item.get_status_display }}{% if item.wedding_date %} · {{ item.wedding_date|date:'d M Y' }}{% endif %}</small></div>
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            {% if access.can_create_wedding %}
-                            <a class="workspace-create-link" href="{% url 'weddings:create' %}"><span>＋</span> Create another wedding</a>
-                            {% endif %}
-                        </div>
-                    </details>
+                    <div class="wedding-switcher"><span class="switcher-dot"></span><div><small>{{ access.role_label }}</small><strong>{{ wedding.name }}</strong></div></div>
                 {% elif access.can_create_wedding %}
-                    <a class="workspace-create-top" href="{% url 'weddings:create' %}">＋ Create wedding</a>
+                    <a class="text-link" href="{% url 'weddings:overview' %}">Create wedding</a>
                 {% endif %}
                 <a class="text-link" href="{% url 'accounts:logout' %}">Sign out</a>
             </div>
