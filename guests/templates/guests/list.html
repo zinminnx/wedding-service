@@ -1,0 +1,97 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Guests · EverAfter{% endblock %}
+
+{% block content %}
+<div class="page-head guest-page-head">
+    <div>
+        <p class="eyebrow">People</p>
+        <h1>Guests</h1>
+        <p class="lead">Manage your guest list, groups and invitation readiness.</p>
+    </div>
+    {% if wedding %}
+        <a class="btn" href="{% url 'guests:add' %}">+ Add Guest</a>
+    {% else %}
+        <a class="btn" href="{% url 'weddings:overview' %}">Create Wedding First</a>
+    {% endif %}
+</div>
+
+{% if wedding %}
+<div class="guest-mini-stats">
+    <div class="guest-mini-stat">
+        <span>Guest records</span>
+        <strong>{{ guests|length }}</strong>
+    </div>
+    <div class="guest-mini-stat">
+        <span>Allocated seats</span>
+        <strong>{{ allocated_seats }}</strong>
+    </div>
+    <div class="guest-mini-stat">
+        <span>Package limit</span>
+        <strong>{{ wedding.guest_limit }}</strong>
+    </div>
+</div>
+{% endif %}
+
+<form class="filter-bar" method="get">
+    <input name="q" value="{{ request.GET.q }}" placeholder="Search guests by name, phone, email...">
+    <select name="group">
+        <option value="">All groups</option>
+        {% for group in groups %}
+            <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:'s' %}selected{% endif %}>{{ group.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="status">
+        <option value="">All status</option>
+        <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
+        <option value="INACTIVE" {% if request.GET.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+    </select>
+    <button class="btn btn-soft" type="submit">Filter</button>
+</form>
+
+<div class="panel table-panel">
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Group</th>
+                    <th>Phone</th>
+                    <th>Party Size</th>
+                    <th>Status</th>
+                    <th>Public ID</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for guest in guests %}
+                    <tr>
+                        <td>
+                            <div class="person-cell">
+                                <div class="avatar small">{{ guest.name|slice:':1'|upper }}</div>
+                                <div>
+                                    <strong>{{ guest.name }}</strong>
+                                    <span>{{ guest.email|default:'—' }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ guest.group.name|default:'—' }}</td>
+                        <td>{{ guest.phone|default:'—' }}</td>
+                        <td>{{ guest.allowed_party_size }}</td>
+                        <td><span class="badge {% if guest.status == 'ACTIVE' %}success{% else %}neutral{% endif %}">{{ guest.get_status_display }}</span></td>
+                        <td><code>{{ guest.public_id }}</code></td>
+                        <td><a class="row-action" href="{% url 'guests:edit' guest.public_id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-state guest-empty">
+                            <strong>No guests yet.</strong>
+                            <span>Add your first guest to start creating invitations.</span>
+                            {% if wedding %}<a class="btn" href="{% url 'guests:add' %}">+ Add first guest</a>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

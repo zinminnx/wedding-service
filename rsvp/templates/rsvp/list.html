@@ -1,0 +1,69 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}RSVP · EverAfter{% endblock %}
+{% block content %}
+<div class="hero-row compact-hero">
+    <div>
+        <p class="eyebrow">Guest responses</p>
+        <h1>RSVP</h1>
+        <p class="lead">See who is coming and plan your celebration with confidence.</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card"><span>Attending</span><strong>{{ counts.attending }}</strong><small>Confirmed invitations</small></div>
+    <div class="stat-card"><span>Maybe</span><strong>{{ counts.maybe }}</strong><small>Still deciding</small></div>
+    <div class="stat-card"><span>Not attending</span><strong>{{ counts.not_attending }}</strong><small>Sent their regrets</small></div>
+    <div class="stat-card"><span>Pending</span><strong>{{ counts.pending }}</strong><small>No RSVP yet</small></div>
+</div>
+
+<section class="panel table-panel">
+    <div class="panel-head">
+        <div>
+            <p class="eyebrow">Responses</p>
+            <h2>{{ wedding.name|default:'Wedding' }}</h2>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th>Guest</th>
+                    <th>Party limit</th>
+                    <th>Response</th>
+                    <th>Attending</th>
+                    <th>Responded</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invitation in invitations %}
+                <tr>
+                    <td>
+                        <strong>{{ invitation.guest.name }}</strong>
+                        <span>{{ invitation.guest.phone|default:'No phone' }}</span>
+                    </td>
+                    <td>{{ invitation.guest.allowed_party_size }}</td>
+                    <td>
+                        {% if invitation.rsvp %}
+                            <span class="status-badge status-{{ invitation.rsvp.response|lower }}">{{ invitation.rsvp.get_response_display }}</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if invitation.rsvp and invitation.rsvp.response == 'ATTENDING' %}
+                            {{ invitation.rsvp.total_attending }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>{{ invitation.rsvp.responded_at|date:'d M Y, g:i A'|default:'—' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="empty-state">No invitations yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

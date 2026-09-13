@@ -1,0 +1,146 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ wedding.name }}</title>
+    <link rel="stylesheet" href="{% static 'invitations/css/invitation.css' %}?v=6.2">
+</head>
+<body>
+<div class="invite-shell">
+    <header class="invite-hero">
+        <div class="floral floral-a"></div><div class="floral floral-b"></div>
+        <p class="overline">You're invited to the wedding of</p>
+        <h1>{{ wedding.groom_name|default:'Groom' }} <span>&</span> {{ wedding.bride_name|default:'Bride' }}</h1>
+        {% if wedding.wedding_date %}<p class="date-line">{{ wedding.wedding_date|date:'D, d F Y' }}</p>{% endif %}
+        <div class="portrait-card"><div class="portrait-fallback"><span>{{ wedding.groom_name|slice:':1' }} ♥ {{ wedding.bride_name|slice:':1' }}</span></div></div>
+        <p class="hero-quote">A new chapter, together.</p>
+    </header>
+
+    <main class="invite-content">
+        <section class="section intro-card">
+            <p class="script">Our Wedding</p>
+            <h2>Dear {{ guest.name }}</h2>
+            <p>We would be delighted to celebrate this beautiful day with you.</p>
+            <div class="mini-grid">
+                <div><span>Date</span><strong>{{ wedding.wedding_date|date:'d M Y'|default:'To be announced' }}</strong></div>
+                <div><span>Time</span><strong>{{ wedding.wedding_date|date:'g:i A'|default:'—' }}</strong></div>
+                <div><span>Party</span><strong>Up to {{ guest.allowed_party_size }}</strong></div>
+            </div>
+        </section>
+
+        <section class="section" id="rsvp">
+            <p class="script">Kindly Respond</p>
+            <h2>Will you be joining us?</h2>
+            {% if rsvp_saved %}<div class="success-banner">✓ Thank you. Your RSVP has been saved.</div>{% endif %}
+            {% if rsvp_error %}<div class="error-banner">{{ rsvp_error }}</div>{% endif %}
+            <form method="post" class="rsvp-form" data-rsvp-form data-party-limit="{{ guest.allowed_party_size }}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="rsvp">
+                <input type="hidden" name="response" value="{{ rsvp.response|default:'' }}" data-rsvp-value>
+                <div class="choice-stack" data-choice-group>
+                    <button type="button" class="choice {% if rsvp.response == 'ATTENDING' %}active{% endif %}" data-choice data-value="ATTENDING">✓ <span><strong>I'll be attending</strong><small>Can't wait to celebrate!</small></span></button>
+                    <button type="button" class="choice {% if rsvp.response == 'NOT_ATTENDING' %}active{% endif %}" data-choice data-value="NOT_ATTENDING">× <span><strong>I'm not attending</strong><small>Sending love from afar</small></span></button>
+                    <button type="button" class="choice {% if rsvp.response == 'MAYBE' %}active{% endif %}" data-choice data-value="MAYBE">? <span><strong>Maybe</strong><small>I'll let you know soon</small></span></button>
+                </div>
+                <div class="party-panel {% if rsvp.response != 'ATTENDING' %}is-hidden{% endif %}" data-party-panel>
+                    <div class="party-head"><strong>Number of guests</strong><span>Maximum {{ guest.allowed_party_size }}</span></div>
+                    <div class="counter-row"><div><strong>Adults</strong><small>Including yourself</small></div><div class="stepper"><button type="button" data-step="-1" data-target="adults">−</button><input id="adults" name="attending_adults" value="{{ rsvp.attending_adults|default:1 }}" readonly><button type="button" data-step="1" data-target="adults">+</button></div></div>
+                    <div class="counter-row"><div><strong>Children</strong><small>Part of your invitation</small></div><div class="stepper"><button type="button" data-step="-1" data-target="children">−</button><input id="children" name="attending_children" value="{{ rsvp.attending_children|default:0 }}" readonly><button type="button" data-step="1" data-target="children">+</button></div></div>
+                    <p class="party-warning" data-party-warning></p>
+                </div>
+                <label class="note-field"><span>Special message <small>(optional)</small></span><textarea name="notes" rows="4" maxlength="500" placeholder="Leave a message for the couple...">{{ rsvp.notes|default:'' }}</textarea></label>
+                <button type="submit" class="primary-action">Save RSVP</button>
+            </form>
+        </section>
+
+        <section class="section gift-card" id="gift">
+            <p class="script">Wedding Gifts</p>
+            <h2>Your presence means the most</h2>
+            <p class="gift-intro">A gift is completely optional. Your choice never affects your RSVP, entry pass, or return gift.</p>
+            {% if gift_saved %}<div class="success-banner">✓ Thank you. Your gift preference has been saved.</div>{% endif %}
+            {% if gift_error %}<div class="error-banner">{{ gift_error }}</div>{% endif %}
+
+            {% if gift_settings.accept_monetary_gift and payment_methods %}
+                <div class="dynamic-payment-list">
+                    {% for method in payment_methods %}
+                    <article class="guest-payment-card">
+                        <div class="guest-method-top">
+                            <span class="guest-method-badge">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</span>
+                            <strong>{{ method.name }}</strong>
+                        </div>
+                        {% if method.qr_image %}<img class="payment-qr" src="{{ method.qr_image.url }}" alt="{{ method.name }} QR">{% endif %}
+                        <div class="guest-method-details">
+                            <span>Account Name</span><b>{{ method.account_name }}</b>
+                            {% if method.method_type == 'PAY' and method.phone_number %}<span>Phone</span><b>{{ method.phone_number }}</b>{% endif %}
+                            {% if method.method_type == 'BANK' %}<span>Account No.</span><b>{{ method.account_number }}</b>{% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="gift-declare-form">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="gift">
+                <div class="gift-choice-list">
+                    {% if gift_settings.allow_no_gift %}
+                        <label><input type="radio" name="gift_choice" value="NONE" {% if gift_declaration.gift_choice == 'NONE' or not gift_declaration %}checked{% endif %}><span><b>No gift</b><small>That's absolutely okay.</small></span></label>
+                    {% endif %}
+                    {% if gift_settings.accept_physical_gift %}
+                        <label><input type="radio" name="gift_choice" value="PHYSICAL" {% if gift_declaration.gift_choice == 'PHYSICAL' %}checked{% endif %}><span><b>Physical gift</b><small>I plan to bring a gift in person.</small></span></label>
+                    {% endif %}
+                    {% if gift_settings.accept_monetary_gift %}
+                        {% for method in payment_methods %}
+                        <label>
+                            <input type="radio" name="gift_choice" value="DIGITAL" data-digital-choice data-method-id="{{ method.id }}" {% if gift_declaration.gift_choice == 'DIGITAL' and gift_declaration.payment_method_record_id == method.id %}checked{% endif %}>
+                            <span><b>{{ method.name }}</b><small>I sent a gift using this {{ method.get_method_type_display|lower }} method.</small></span>
+                        </label>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <input type="hidden" name="payment_method_id" value="{% if gift_declaration and gift_declaration.payment_method_record_id %}{{ gift_declaration.payment_method_record_id }}{% endif %}" data-payment-method-id>
+                <div class="digital-proof-fields">
+                    <label><span>Amount <small>(optional)</small></span><input type="number" min="0" step="0.01" name="amount" value="{{ gift_declaration.amount|default:'' }}" placeholder="0.00"></label>
+                    <label><span>Reference / note <small>(optional)</small></span><input type="text" name="payment_reference" value="{{ gift_declaration.payment_reference|default:'' }}" placeholder="Transaction reference"></label>
+                </div>
+                <label class="note-field"><span>Gift note <small>(optional)</small></span><textarea name="gift_notes" rows="3" maxlength="255" placeholder="Any note for the couple...">{{ gift_declaration.notes|default:'' }}</textarea></label>
+                <button type="submit" class="secondary-action">Save Gift Preference</button>
+            </form>
+        </section>
+
+        <section class="section pass-card" id="entry-pass">
+            <p class="script">Your Entry Pass</p>
+            <h2>Keep this ready at reception</h2>
+            <div class="entry-qr-card"><img class="entry-qr" src="{% url 'checkins:qr_image' invitation.qr_token %}" alt="Entrance QR"></div>
+            <strong>{{ guest.name }}</strong>
+            <span class="status-pill">Invitation active</span>
+            <p class="module-note">Show this QR at the reception counter. It contains a secure token, not your personal details.</p>
+        </section>
+
+        <section class="section capture-card">
+            <p class="script">Capture the Moments</p><h2>Share your wedding photos</h2><div class="upload-box"><span>＋</span><strong>Upload photos</strong><small>Guest camera & OneDrive upload will connect later.</small></div>
+            <div class="gallery-grid"><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        </section>
+    </main>
+    <footer class="invite-footer"><span>Beautiful moments · lasting memories</span></footer>
+</div>
+<script src="{% static 'invitations/js/invitation.js' %}"></script>
+<script>
+(function(){
+    const methodInput = document.querySelector('[data-payment-method-id]');
+    document.querySelectorAll('[data-digital-choice]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+            if (radio.checked && methodInput) methodInput.value = radio.dataset.methodId || '';
+        });
+    });
+    document.querySelectorAll('input[name="gift_choice"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+            if (radio.checked && radio.value !== 'DIGITAL' && methodInput) methodInput.value = '';
+        });
+    });
+})();
+</script>
+</body>
+</html>

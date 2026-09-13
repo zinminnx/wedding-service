@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets
+.env
+.env.*
+
+# Local database
+db.sqlite3
+
+# Django generated files
+media/
+staticfiles/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Patch / temporary scripts
+apply_patch.ps1
+migrate_legacy_payment_methods.py

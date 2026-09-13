@@ -1,0 +1,132 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}{% if editing %}Edit Guest{% else %}Add Guest{% endif %} · EverAfter{% endblock %}
+
+{% block content %}
+<div class="page-head guest-form-head">
+    <div>
+        <p class="eyebrow">Guest Management</p>
+        <h1>{% if editing %}Edit Guest{% else %}Add a Guest{% endif %}</h1>
+        <p class="lead">Keep the information simple now. RSVP and invitation details can be managed later.</p>
+    </div>
+    <a class="btn btn-outline" href="{% url 'guests:list' %}">Back to Guests</a>
+</div>
+
+<div class="guest-editor-grid">
+    <form method="post" class="panel guest-form-card" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="section-title">
+            <span class="section-step">1</span>
+            <div>
+                <h2>Guest Information</h2>
+                <p>Who are you inviting?</p>
+            </div>
+        </div>
+
+        <div class="guest-form-grid">
+            <div class="field field-span-2">
+                <label for="{{ form.name.id_for_label }}">Guest / Family Name <span>*</span></label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                <small>Examples: “Ko Aung Min” or “U Hla & Family”.</small>
+            </div>
+
+            <div class="field">
+                <label for="{{ form.phone.id_for_label }}">Phone</label>
+                {{ form.phone }}
+                {% for error in form.phone.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="section-title">
+            <span class="section-step">2</span>
+            <div>
+                <h2>Invitation Settings</h2>
+                <p>Set the guest group and how many seats this invitation covers.</p>
+            </div>
+        </div>
+
+        <div class="guest-form-grid">
+            <div class="field">
+                <label for="{{ form.group.id_for_label }}">Existing Group</label>
+                {{ form.group }}
+                {% for error in form.group.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                <small>Family, Friends, Office, VIP, etc.</small>
+            </div>
+
+            <div class="field">
+                <label for="{{ form.new_group.id_for_label }}">New Group</label>
+                {{ form.new_group }}
+                {% for error in form.new_group.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                <small>If filled, this will override the existing group selection.</small>
+            </div>
+
+            <div class="field">
+                <label for="{{ form.allowed_party_size.id_for_label }}">Allowed Party Size <span>*</span></label>
+                {{ form.allowed_party_size }}
+                {% for error in form.allowed_party_size.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                <small>Total people allowed under this invitation.</small>
+            </div>
+
+            <div class="field">
+                <label for="{{ form.status.id_for_label }}">Status</label>
+                {{ form.status }}
+                {% for error in form.status.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="field field-span-2">
+                <label for="{{ form.notes.id_for_label }}">Internal Note</label>
+                {{ form.notes }}
+                {% for error in form.notes.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                <small>This note is for the wedding team and will not be shown to the guest.</small>
+            </div>
+        </div>
+
+        <div class="guest-form-actions">
+            <a class="btn btn-outline" href="{% url 'guests:list' %}">Cancel</a>
+            {% if not editing %}
+                <button class="btn btn-soft" type="submit" name="action" value="save_add_another">Save & Add Another</button>
+            {% endif %}
+            <button class="btn" type="submit" name="action" value="save">{% if editing %}Save Changes{% else %}Add Guest{% endif %}</button>
+        </div>
+    </form>
+
+    <aside class="panel guest-guide-card">
+        <p class="eyebrow">Quick Guide</p>
+        <h2>How this guest will work</h2>
+        <div class="guide-item">
+            <span>01</span>
+            <div><strong>Create guest</strong><p>Name, contact and party size are saved under {{ wedding.name }}.</p></div>
+        </div>
+        <div class="guide-item">
+            <span>02</span>
+            <div><strong>Create invitation</strong><p>The guest can receive a personal invitation link and QR code.</p></div>
+        </div>
+        <div class="guide-item">
+            <span>03</span>
+            <div><strong>Collect RSVP</strong><p>Attendance numbers will update automatically on the dashboard.</p></div>
+        </div>
+        <div class="guide-item">
+            <span>04</span>
+            <div><strong>Wedding day</strong><p>The same guest record can later power QR check-in and return gifts.</p></div>
+        </div>
+        <div class="capacity-box">
+            <span>Wedding guest limit</span>
+            <strong>{{ wedding.guest_limit }}</strong>
+            <small>Party sizes across all guest records count toward this limit.</small>
+        </div>
+    </aside>
+</div>
+{% endblock %}

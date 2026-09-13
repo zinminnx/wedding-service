@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · EverAfter</title>
+    <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
+</head>
+<body>
+<div class="login-page">
+    <section class="login-visual">
+        <div class="visual-copy"><p>Every love story<br>deserves a beautiful home.</p><span>Plan · Manage · Celebrate</span></div>
+    </section>
+    <section class="login-panel">
+        <div class="login-card">
+            <div class="logo-mark">∞</div><h1>EverAfter</h1><p class="kicker">Wedding Management Platform</p>
+            <h2>Welcome back</h2><p class="muted">Sign in to your wedding dashboard.</p>
+            <form method="post">{% csrf_token %}
+                <label>Email or username{{ form.username }}</label>
+                <label>Password{{ form.password }}</label>
+                {% if form.errors %}<p class="error">Username or password is incorrect.</p>{% endif %}
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+    </section>
+</div>
+</body>
+</html>

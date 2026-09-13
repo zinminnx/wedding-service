@@ -1,0 +1,160 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Gifts · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=6.2">{% endblock %}
+
+{% block content %}
+<div class="page-head gift-page-head">
+    <div>
+        <p class="eyebrow">Wedding Gifts</p>
+        <h1>Gifts & Return Gifts</h1>
+        <p class="lead">Add any Mobile Pay or bank account you want. Nothing is fixed to KBZPay or AYA Pay.</p>
+    </div>
+</div>
+
+<div class="gift-stats">
+    <div class="gift-stat"><span>Declarations</span><strong>{{ counts.total }}</strong><small>Guests who selected an option</small></div>
+    <div class="gift-stat"><span>Digital</span><strong>{{ counts.digital }}</strong><small>{{ counts.guest_sent }} awaiting verification</small></div>
+    <div class="gift-stat"><span>Verified</span><strong>{{ counts.verified }}</strong><small>Confirmed payments</small></div>
+    <div class="gift-stat"><span>Return gifts</span><strong>{{ return_gift.remaining }}</strong><small>{{ return_gift.issued }} issued of {{ return_gift.stock }}</small></div>
+</div>
+
+<div class="gift-layout">
+    <section class="panel gift-settings-card">
+        <div class="section-title-row">
+            <div><p class="eyebrow">Owner Settings</p><h2>Gift Options</h2></div>
+            <span class="soft-pill">Optional for guests</span>
+        </div>
+
+        <form method="post" class="gift-settings-form">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="settings">
+            {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+            <div class="toggle-grid">
+                <label class="toggle-card">{{ form.accept_monetary_gift }}<span><b>Money gifts</b><small>Show your saved payment methods.</small></span></label>
+                <label class="toggle-card">{{ form.accept_physical_gift }}<span><b>Physical gifts</b><small>Guests may bring a gift.</small></span></label>
+                <label class="toggle-card">{{ form.allow_no_gift }}<span><b>No gift option</b><small>Make it clear gifts are optional.</small></span></label>
+            </div>
+
+            <div class="soft-divider"></div>
+            <div class="return-grid">
+                <label><span>Return gift rule</span>{{ form.return_gift_mode }}</label>
+                <label><span>Gift name</span>{{ form.return_gift_name }}</label>
+                <label><span>Total stock</span>{{ form.return_gift_stock }}</label>
+                <label><span>Custom qty</span>{{ form.custom_return_gift_quantity }}</label>
+            </div>
+            <p class="helper-copy">Wedding gift and return gift stay independent. A guest can choose “No gift” and still use the entrance pass and receive a return gift.</p>
+            <div class="form-actions"><button class="btn" type="submit">Save Gift Settings</button></div>
+        </form>
+
+        <div class="soft-divider"></div>
+        <div class="section-title-row method-title-row">
+            <div><p class="eyebrow">Flexible Payment Methods</p><h2>Your payment accounts</h2><p class="helper-copy compact">Add as many Pay or Bank methods as you need.</p></div>
+        </div>
+
+        <div class="method-list">
+            {% for method in payment_methods %}
+            <article class="method-card {% if not method.is_enabled %}is-disabled{% endif %}">
+                <div class="method-icon {% if method.method_type == 'BANK' %}bank{% else %}pay{% endif %}">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</div>
+                <div class="method-main">
+                    <div class="method-name-row"><strong>{{ method.name }}</strong><span class="method-type">{{ method.get_method_type_display }}</span>{% if not method.is_enabled %}<span class="method-off">Disabled</span>{% endif %}</div>
+                    <span>{{ method.account_name }}</span>
+                    {% if method.method_type == 'PAY' %}
+                        <small>{% if method.phone_number %}{{ method.phone_number }}{% else %}QR only{% endif %}</small>
+                    {% else %}
+                        <small>Account No. {{ method.account_number }}</small>
+                    {% endif %}
+                </div>
+                {% if method.qr_image %}<img class="method-qr-thumb" src="{{ method.qr_image.url }}" alt="{{ method.name }} QR">{% endif %}
+                <div class="method-actions">
+                    <a href="?edit={{ method.id }}#payment-method-form">Edit</a>
+                    <form method="post" action="{% url 'gifts:payment_method_action' method.id %}">{% csrf_token %}<button name="action" value="toggle">{% if method.is_enabled %}Disable{% else %}Enable{% endif %}</button></form>
+                    <form method="post" action="{% url 'gifts:payment_method_action' method.id %}" onsubmit="return confirm('Remove this payment method?');">{% csrf_token %}<button class="danger" name="action" value="delete">Delete</button></form>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-payment-state"><strong>No payment methods yet.</strong><span>Add Mobile Pay or Bank below.</span></div>
+            {% endfor %}
+        </div>
+
+        <form id="payment-method-form" method="post" enctype="multipart/form-data" class="payment-method-form">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="payment_method">
+            {% if edit_method %}<input type="hidden" name="method_id" value="{{ edit_method.id }}">{% endif %}
+            <div class="method-form-head">
+                <div><p class="eyebrow">{% if edit_method %}Edit Method{% else %}Add Method{% endif %}</p><h3>{% if edit_method %}{{ edit_method.name }}{% else %}New payment method{% endif %}</h3></div>
+                {% if edit_method %}<a class="cancel-edit" href="{% url 'gifts:dashboard' %}#payment-method-form">Cancel edit</a>{% endif %}
+            </div>
+            {% if payment_form.non_field_errors %}<div class="form-errors">{{ payment_form.non_field_errors }}</div>{% endif %}
+            <div class="payment-method-fields">
+                <label><span>Type</span>{{ payment_form.method_type }}<small>Pay = phone/QR, Bank = account number.</small></label>
+                <label><span>Name</span>{{ payment_form.name }}<small>Example: KBZPay, Wave Pay, AYA Bank.</small></label>
+                <label><span>Account name</span>{{ payment_form.account_name }}</label>
+                <label class="pay-field"><span>Phone number</span>{{ payment_form.phone_number }}{% if payment_form.phone_number.errors %}<small class="field-error">{{ payment_form.phone_number.errors|striptags }}</small>{% endif %}</label>
+                <label class="bank-field"><span>Account number</span>{{ payment_form.account_number }}{% if payment_form.account_number.errors %}<small class="field-error">{{ payment_form.account_number.errors|striptags }}</small>{% endif %}</label>
+                <label class="pay-field"><span>QR image <small>(optional if phone is set)</small></span>{{ payment_form.qr_image }}{% if payment_form.qr_image.errors %}<small class="field-error">{{ payment_form.qr_image.errors|striptags }}</small>{% endif %}</label>
+                <label class="method-enabled">{{ payment_form.is_enabled }} <span>Enable this method</span></label>
+            </div>
+            <div class="method-hint" data-method-hint>Mobile Pay needs an account name plus phone number or QR. Bank needs account name plus account number.</div>
+            <div class="form-actions"><button class="btn" type="submit">{% if edit_method %}Update Payment Method{% else %}Add Payment Method{% endif %}</button></div>
+        </form>
+    </section>
+
+    <aside class="panel inventory-card">
+        <p class="eyebrow">Return Gift Inventory</p>
+        <h2>{{ settings_obj.return_gift_name|default:'Wedding Souvenir' }}</h2>
+        <div class="inventory-number">{{ return_gift.remaining }}</div>
+        <span>remaining</span>
+        <div class="inventory-bar"><i style="width:{% if return_gift.stock %}{% widthratio return_gift.issued return_gift.stock 100 %}{% else %}0{% endif %}%"></i></div>
+        <div class="inventory-facts"><div><span>Stock</span><strong>{{ return_gift.stock }}</strong></div><div><span>Issued</span><strong>{{ return_gift.issued }}</strong></div></div>
+        <a class="btn btn-soft full-btn" href="{% url 'checkins:dashboard' %}">Open Reception Check-in</a>
+    </aside>
+</div>
+
+<section class="panel declaration-panel">
+    <div class="panel-head"><div><p class="eyebrow">Guest Declarations</p><h2>Wedding Gift Responses</h2></div></div>
+    <div class="table-scroll">
+        <table>
+            <thead><tr><th>Guest</th><th>Choice</th><th>Method</th><th>Amount</th><th>Status</th><th>Reference</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for item in declarations %}
+                <tr>
+                    <td><strong>{{ item.guest.name }}</strong><small class="table-note">{{ item.updated_at|date:'d M · g:i A' }}</small></td>
+                    <td>{{ item.get_gift_choice_display }}</td>
+                    <td>{{ item.payment_method_label }}</td>
+                    <td>{% if item.amount %}{{ item.amount }}{% else %}—{% endif %}</td>
+                    <td><span class="payment-status status-{{ item.payment_status|lower }}">{{ item.get_payment_status_display }}</span></td>
+                    <td>{{ item.payment_reference|default:'—' }}</td>
+                    <td>
+                        {% if item.gift_choice == 'DIGITAL' %}
+                            <form class="inline-actions" method="post" action="{% url 'gifts:declaration_action' item.id %}">{% csrf_token %}
+                                {% if item.payment_status != 'VERIFIED' %}<button name="action" value="verify">Verify</button>{% endif %}
+                                {% if item.payment_status != 'REJECTED' %}<button class="danger" name="action" value="reject">Reject</button>{% endif %}
+                                {% if item.payment_status == 'VERIFIED' or item.payment_status == 'REJECTED' %}<button name="action" value="reset">Reset</button>{% endif %}
+                            </form>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="empty-state">No guest gift declarations yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+(function(){
+    const typeField = document.getElementById('id_method_type');
+    const payFields = document.querySelectorAll('.pay-field');
+    const bankFields = document.querySelectorAll('.bank-field');
+    function syncFields(){
+        const type = typeField ? typeField.value : 'PAY';
+        payFields.forEach(el => el.classList.toggle('field-hidden', type !== 'PAY'));
+        bankFields.forEach(el => el.classList.toggle('field-hidden', type !== 'BANK'));
+    }
+    if(typeField){ typeField.addEventListener('change', syncFields); syncFields(); }
+})();
+</script>
+{% endblock %}

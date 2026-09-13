@@ -1,0 +1,50 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Reception Pass · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'checkins/css/checkins.css' %}?v=6">{% endblock %}
+
+{% block content %}
+<div class="reception-pass-wrap">
+    <div class="pass-toolbar"><a class="text-link" href="{% url 'checkins:dashboard' %}">← Back to reception</a><span>{{ wedding.name }}</span></div>
+
+    {% if blocked %}
+        <section class="panel blocked-pass"><div class="blocked-icon">×</div><p class="eyebrow">Entry Pass</p><h1>Invitation unavailable</h1><p>This invitation has been revoked or expired. Do not check this guest in without an authorized override.</p></section>
+    {% else %}
+        <section class="panel guest-pass-card">
+            <div class="pass-state {% if checkin.checked_in_count %}is-checked{% endif %}">{% if checkin.checked_in_count %}✓{% else %}QR{% endif %}</div>
+            <p class="eyebrow">Reception Pass</p>
+            <h1>{{ guest.name }}</h1>
+            <p class="guest-id">{{ guest.public_id }}</p>
+
+            <div class="pass-facts">
+                <div><span>Party limit</span><strong>{{ guest.allowed_party_size }}</strong></div>
+                <div><span>RSVP</span><strong>{% if rsvp %}{{ rsvp.get_response_display }}{% else %}No response{% endif %}</strong></div>
+                <div><span>Checked in</span><strong>{{ checkin.checked_in_count|default:0 }}</strong></div>
+                <div><span>Return gift</span><strong>{{ checkin.return_gift_quantity|default:0 }}</strong></div>
+            </div>
+
+            <div class="reception-actions">
+                {% if not checkin.checked_in_count %}
+                    <form method="post" class="checkin-form">{% csrf_token %}<input type="hidden" name="action" value="check_in"><label>People arriving now<input type="number" name="checked_in_count" min="1" max="{{ guest.allowed_party_size }}" value="{{ guest.allowed_party_size }}"></label><button class="big-action" type="submit">Check In Guest</button></form>
+                {% else %}
+                    <div class="success-block"><b>Checked in</b><span>{{ checkin.checked_in_count }} person(s) · {{ checkin.checked_in_at|date:'d M Y · g:i A' }}</span></div>
+                    <form method="post" onsubmit="return confirm('Undo this check-in?');">{% csrf_token %}<input type="hidden" name="action" value="undo_check_in"><button class="small-action" type="submit">Undo check-in</button></form>
+                {% endif %}
+
+                <div class="return-gift-box">
+                    <div><p class="eyebrow">Return Gift</p><h2>{{ gift_settings.return_gift_name|default:'Wedding Souvenir' }}</h2><p>{{ remaining_stock }} remaining in stock</p></div>
+                    {% if checkin.return_gift_quantity %}
+                        <span class="issued-badge">✓ {{ checkin.return_gift_quantity }} issued</span>
+                    {% elif gift_settings.return_gift_mode == 'NONE' %}
+                        <span class="muted">Disabled</span>
+                    {% else %}
+                        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="issue_return_gift"><button class="gift-action" type="submit" {% if not checkin.checked_in_count %}disabled{% endif %}>Issue {{ eligible_return_gift_qty }} Gift{% if eligible_return_gift_qty != 1 %}s{% endif %}</button></form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <p class="privacy-note">Wedding gift/payment status does not control this entrance pass or return-gift eligibility.</p>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

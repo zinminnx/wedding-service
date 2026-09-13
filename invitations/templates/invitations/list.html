@@ -1,0 +1,169 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Invitations · EverAfter{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'invitations/css/manager.css' %}?v=5">
+{% endblock %}
+
+{% block content %}
+<div class="page-head invitation-page-head">
+    <div>
+        <p class="eyebrow">Guest Experience</p>
+        <h1>Invitations</h1>
+        <p class="lead">Create personal invitation links, track opens and manage delivery.</p>
+    </div>
+    {% if wedding %}
+        <form method="post" action="{% url 'invitations:generate_missing' %}">
+            {% csrf_token %}
+            <button class="btn" type="submit">Generate Missing Invitations</button>
+        </form>
+    {% endif %}
+</div>
+
+{% if wedding %}
+<div class="invite-stats">
+    <div class="invite-stat"><span>Total guests</span><strong>{{ counts.guests }}</strong></div>
+    <div class="invite-stat"><span>Invitations</span><strong>{{ counts.generated }}</strong></div>
+    <div class="invite-stat"><span>Opened</span><strong>{{ counts.opened }}</strong></div>
+    <div class="invite-stat"><span>RSVP responses</span><strong>{{ counts.responded }}</strong></div>
+    <div class="invite-stat warning"><span>Missing</span><strong>{{ counts.missing }}</strong></div>
+</div>
+{% endif %}
+
+<form class="invite-filter" method="get">
+    <input name="q" value="{{ request.GET.q }}" placeholder="Search guest name, phone, email or ID...">
+    <select name="status">
+        <option value="">All invitation status</option>
+        <option value="MISSING" {% if request.GET.status == 'MISSING' %}selected{% endif %}>Missing invitation</option>
+        {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-soft" type="submit">Filter</button>
+</form>
+
+<div class="panel invitation-table-panel">
+    <div class="table-scroll">
+        <table class="invitation-table">
+            <thead>
+                <tr>
+                    <th>Guest</th>
+                    <th>Invitation</th>
+                    <th>Opened</th>
+                    <th>RSVP</th>
+                    <th>Public Link</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>
+                            <div class="person-cell">
+                                <div class="avatar small">{{ row.guest.name|slice:':1'|upper }}</div>
+                                <div>
+                                    <strong>{{ row.guest.name }}</strong>
+                                    <span>{{ row.guest.group.name|default:'No group' }} · Party {{ row.guest.allowed_party_size }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if row.invitation %}
+                                <span class="invite-status status-{{ row.invitation.status|lower }}">{{ row.invitation.get_status_display }}</span>
+                                {% if row.invitation.sent_at %}<small class="cell-note">Sent {{ row.invitation.sent_at|date:'d M · g:i A' }}</small>{% endif %}
+                            {% else %}
+                                <span class="invite-status status-missing">Not generated</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.invitation %}
+                                <strong>{{ row.invitation.open_count }}</strong>
+                                <small class="cell-note">{{ row.invitation.last_opened_at|date:'d M · g:i A'|default:'Never opened' }}</small>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if row.rsvp %}
+                                <span class="rsvp-chip rsvp-{{ row.rsvp.response|lower }}">{{ row.rsvp.get_response_display }}</span>
+                                {% if row.rsvp.response == 'ATTENDING' %}<small class="cell-note">{{ row.rsvp.total_attending }} attending</small>{% endif %}
+                            {% else %}
+                                <span class="muted">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="link-cell">
+                            {% if row.invitation %}
+                                {% url 'invitations:detail' row.invitation.token as invite_path %}
+                                <button type="button" class="copy-link" data-copy-path="{{ invite_path }}">Copy link</button>
+                                {% if row.invitation.status != 'REVOKED' and row.invitation.status != 'EXPIRED' %}
+                                    <a class="open-link" target="_blank" href="{{ invite_path }}">Open</a>
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                {% if not row.invitation %}
+                                    <form method="post" action="{% url 'invitations:generate_guest' row.guest.public_id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn primary">Generate</button>
+                                    </form>
+                                {% else %}
+                                    {% if row.invitation.status == 'REVOKED' %}
+                                        <form method="post" action="{% url 'invitations:action' row.invitation.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="restore">
+                                            <button type="submit" class="action-btn">Restore</button>
+                                        </form>
+                                    {% else %}
+                                        {% if row.invitation.status != 'SENT' and row.invitation.status != 'OPENED' %}
+                                            <form method="post" action="{% url 'invitations:action' row.invitation.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="mark_sent">
+                                                <button type="submit" class="action-btn">Mark sent</button>
+                                            </form>
+                                        {% endif %}
+                                        <form method="post" action="{% url 'invitations:action' row.invitation.id %}" onsubmit="return confirm('Revoke this invitation?');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="revoke">
+                                            <button type="submit" class="action-btn danger">Revoke</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state invitation-empty">
+                            {% if wedding %}
+                                <strong>No guests match this filter.</strong>
+                                <span>Add guests first, then invitations can be created automatically.</span>
+                                <a class="btn" href="{% url 'guests:add' %}">+ Add Guest</a>
+                            {% else %}
+                                <strong>No wedding selected.</strong>
+                                <a class="btn" href="{% url 'weddings:overview' %}">Create Wedding</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="invite-help panel">
+    <div>
+        <p class="eyebrow">Automatic workflow</p>
+        <h2>Guest → Invitation → RSVP</h2>
+        <p>New guests now receive a ready invitation automatically. Share the personal link and the system tracks opens and RSVP responses.</p>
+    </div>
+    <div class="workflow-steps">
+        <span>1. Add guest</span><b>→</b><span>2. Copy link</span><b>→</b><span>3. Guest opens</span><b>→</b><span>4. RSVP</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'invitations/js/manager.js' %}?v=5"></script>
+{% endblock %}
