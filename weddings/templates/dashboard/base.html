@@ -40,7 +40,7 @@
             <a class="nav-item {% if request.resolver_match.namespace == 'checkins' %}active{% endif %}" href="{% url 'checkins:dashboard' %}">Check-in</a>
             {% endif %}
 
-            {% if access.photo %}<a class="nav-item disabled" href="#">Photos</a>{% endif %}
+            {% if access.photo %}<a class="nav-item {% if request.resolver_match.namespace == 'photos' %}active{% endif %}" href="{% url 'photos:dashboard' %}">Photos</a>{% endif %}
             {% if access.manage_gifts %}<a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>{% endif %}
             {% if access.print %}<a class="nav-item disabled" href="#">Printing</a>{% endif %}
 

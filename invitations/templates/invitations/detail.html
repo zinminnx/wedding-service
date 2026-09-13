@@ -55,6 +55,13 @@
             </form>
         </section>
 
+        <section class="section" id="photos">
+            <p class="script">Share a Moment</p>
+            <h2>Captured something beautiful?</h2>
+            <p>Share photos from the celebration with the couple. New uploads may be reviewed before they appear on the live wedding slideshow.</p>
+            <a class="primary-action" href="{% url 'photos:guest_upload' invitation.token %}" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">Share Wedding Photos</a>
+        </section>
+
         <section class="section gift-card" id="gift">
             <p class="script">Wedding Gifts</p>
             <h2>Your presence means the most</h2>

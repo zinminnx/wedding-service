@@ -1,0 +1,172 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Photos · {{ wedding.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'photos/css/photos.css' %}?v=10">
+{% endblock %}
+
+{% block content %}
+<div class="photo-page">
+    <div class="photo-page-head">
+        <div>
+            <p class="photo-eyebrow">Wedding Gallery</p>
+            <h1>Guest Photos</h1>
+            <p>Collect moments from guests, review them, and send approved photos to the live slideshow.</p>
+        </div>
+        <div class="photo-head-actions">
+            {% if photo_settings.slideshow_enabled %}
+            <a class="photo-btn photo-btn-secondary" href="{{ slideshow_url }}" target="_blank" rel="noopener">Open Live Slideshow ↗</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="photo-stat-grid">
+        <div class="photo-stat"><span>All photos</span><strong>{{ counts.all }}</strong><small>{{ current_photo_count }} / {{ photo_limit }} package slots</small></div>
+        <div class="photo-stat photo-stat-warn"><span>Pending review</span><strong>{{ counts.pending }}</strong><small>Waiting for moderation</small></div>
+        <div class="photo-stat photo-stat-good"><span>Approved</span><strong>{{ counts.approved }}</strong><small>Available for slideshow</small></div>
+        <div class="photo-stat"><span>Rejected</span><strong>{{ counts.rejected }}</strong><small>Kept out of public view</small></div>
+    </div>
+
+    <div class="photo-layout">
+        <section class="photo-card photo-main-card">
+            <div class="photo-card-head">
+                <div>
+                    <p class="photo-eyebrow">Moderation Queue</p>
+                    <h2>Photo Library</h2>
+                </div>
+                <div class="photo-capacity"><strong>{{ remaining }}</strong><span>uploads left</span></div>
+            </div>
+
+            <form class="photo-toolbar" method="get">
+                <input type="search" name="q" value="{{ q }}" placeholder="Search guest, file, caption...">
+                <select name="status">
+                    <option value="">All statuses</option>
+                    {% for value,label in status_choices %}<option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <select name="source">
+                    <option value="">All sources</option>
+                    {% for value,label in source_choices %}<option value="{{ value }}" {% if source_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button class="photo-btn photo-btn-secondary" type="submit">Filter</button>
+                {% if q or status_filter or source_filter %}<a class="photo-clear" href="{% url 'photos:dashboard' %}">Clear</a>{% endif %}
+            </form>
+
+            <form method="post" action="{% url 'photos:bulk_action' %}" data-bulk-form>
+                {% csrf_token %}
+                <div class="photo-bulkbar">
+                    <label><input type="checkbox" data-select-all> <span>Select all visible</span></label>
+                    <div>
+                        <button class="photo-link-btn" name="action" value="approve">Approve</button>
+                        <button class="photo-link-btn" name="action" value="reject">Reject</button>
+                        <button class="photo-link-btn" name="action" value="download">Download selected</button>
+                        <button class="photo-link-btn photo-link-danger" name="action" value="delete" data-confirm="Delete the selected photos and their files?">Delete</button>
+                    </div>
+                </div>
+
+                {% if photos %}
+                <div class="photo-grid">
+                    {% for photo in photos %}
+                    <article class="photo-tile">
+                        <label class="photo-select"><input type="checkbox" name="photo_ids" value="{{ photo.public_id }}" data-photo-checkbox><span></span></label>
+                        <div class="photo-image-wrap">
+                            <img src="{{ photo.image.url }}" alt="Wedding photo {{ photo.public_id }}" loading="lazy">
+                            <span class="photo-status status-{{ photo.status|lower }}">{{ photo.get_status_display }}</span>
+                        </div>
+                        <div class="photo-tile-body">
+                            <div class="photo-meta-row">
+                                <span class="photo-source">{{ photo.get_source_display }}</span>
+                                <time>{{ photo.created_at|date:'d M · g:i A' }}</time>
+                            </div>
+                            <h3>{% if photo.guest %}{{ photo.guest.name }}{% else %}{{ photo.get_source_display }} upload{% endif %}</h3>
+                            {% if photo.caption %}<p class="photo-caption">{{ photo.caption }}</p>{% endif %}
+                            <p class="photo-file">{{ photo.original_filename|truncatechars:34 }} · {{ photo.file_size|filesizeformat }}</p>
+                            <div class="photo-tile-actions">
+                                {% if photo.status != 'APPROVED' %}
+                                <button type="submit" formaction="{% url 'photos:photo_action' photo.public_id %}" name="action" value="approve" class="photo-action-good">Approve</button>
+                                {% endif %}
+                                {% if photo.status != 'REJECTED' %}
+                                <button type="submit" formaction="{% url 'photos:photo_action' photo.public_id %}" name="action" value="reject">Reject</button>
+                                {% endif %}
+                                <a href="{% url 'photos:staff_download' photo.public_id %}">Download</a>
+                            </div>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="photo-empty">
+                    <div class="photo-empty-icon">✦</div>
+                    <h3>No photos here yet</h3>
+                    <p>Guest uploads and staff uploads will appear in this moderation library.</p>
+                </div>
+                {% endif %}
+            </form>
+        </section>
+
+        <aside class="photo-side-stack">
+            <section class="photo-card">
+                <div class="photo-card-head compact"><div><p class="photo-eyebrow">Add Moments</p><h2>Staff Upload</h2></div></div>
+                <form class="photo-upload-form" method="post" action="{% url 'photos:staff_upload' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <label class="photo-dropzone">
+                        <input type="file" name="photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple required data-file-input>
+                        <span class="photo-drop-icon">＋</span>
+                        <strong>Choose photos</strong>
+                        <small>JPG, PNG, WEBP or GIF · max {{ photo_settings.max_upload_mb }} MB each</small>
+                        <em data-file-label>No files selected</em>
+                    </label>
+                    <label class="photo-field"><span>Caption <small>(optional)</small></span><textarea name="caption" rows="3" maxlength="280" placeholder="A little note for these moments..."></textarea></label>
+                    <button class="photo-btn photo-btn-primary" type="submit">Upload Photos</button>
+                </form>
+            </section>
+
+            <section class="photo-card">
+                <div class="photo-card-head compact"><div><p class="photo-eyebrow">Display</p><h2>Live Slideshow</h2></div></div>
+                {% if photo_settings.slideshow_enabled %}
+                    <div class="photo-live-badge"><span></span> Live slideshow enabled</div>
+                    <label class="photo-field"><span>Private slideshow link</span><div class="photo-copy-row"><input value="{{ slideshow_url }}" readonly data-copy-input><button type="button" data-copy-button>Copy</button></div></label>
+                    <p class="photo-help">Only approved photos appear. Keep this private link for the venue display device.</p>
+                {% else %}
+                    <div class="photo-live-off">Slideshow is currently off.</div>
+                    <p class="photo-help">Turn it on below when the venue screen is ready.</p>
+                {% endif %}
+            </section>
+
+            {% if can_manage_settings %}
+            <section class="photo-card">
+                <div class="photo-card-head compact"><div><p class="photo-eyebrow">Owner Settings</p><h2>Photo Rules</h2></div></div>
+                <form class="photo-settings-form" method="post" action="{% url 'photos:settings' %}">
+                    {% csrf_token %}
+                    <label class="photo-toggle"><input type="checkbox" name="guest_upload_enabled" {% if photo_settings.guest_upload_enabled %}checked{% endif %}><span><strong>Guest uploads</strong><small>Allow invited guests to add photos.</small></span></label>
+                    <label class="photo-toggle"><input type="checkbox" name="moderation_required" {% if photo_settings.moderation_required %}checked{% endif %}><span><strong>Require approval</strong><small>New photos stay private until reviewed.</small></span></label>
+                    <label class="photo-toggle"><input type="checkbox" name="slideshow_enabled" {% if photo_settings.slideshow_enabled %}checked{% endif %}><span><strong>Live slideshow</strong><small>Expose approved photos through the private venue link.</small></span></label>
+                    <label class="photo-toggle"><input type="checkbox" name="guest_can_download_own" {% if photo_settings.guest_can_download_own %}checked{% endif %}><span><strong>Guest downloads</strong><small>Guests may download their own uploads.</small></span></label>
+                    <div class="photo-two-fields">
+                        <label class="photo-field"><span>Max MB / photo</span><input type="number" name="max_upload_mb" min="1" max="50" value="{{ photo_settings.max_upload_mb }}"></label>
+                        <label class="photo-field"><span>Files / upload</span><input type="number" name="max_files_per_upload" min="1" max="20" value="{{ photo_settings.max_files_per_upload }}"></label>
+                    </div>
+                    <button class="photo-btn photo-btn-primary" type="submit">Save Photo Settings</button>
+                </form>
+            </section>
+            {% endif %}
+
+            <section class="photo-card photo-download-card">
+                <div><p class="photo-eyebrow">Original Files</p><h2>Wedding Archive</h2><p>Download every original photo currently stored for this wedding.</p></div>
+                {% if counts.all %}
+                <form method="post" action="{% url 'photos:bulk_action' %}">
+                    {% csrf_token %}
+                    {% for photo in photos %}<input type="hidden" name="photo_ids" value="{{ photo.public_id }}">{% endfor %}
+                    <button class="photo-btn photo-btn-secondary full" name="action" value="download_all">Download All Originals</button>
+                </form>
+                {% else %}<button class="photo-btn photo-btn-secondary full" type="button" disabled>No photos yet</button>{% endif %}
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'photos/js/dashboard.js' %}?v=10"></script>
+{% endblock %}

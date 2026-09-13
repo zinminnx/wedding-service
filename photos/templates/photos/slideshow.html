@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Live Moments · {{ wedding.name }}</title>
+    <link rel="stylesheet" href="{% static 'photos/css/slideshow.css' %}?v=10">
+</head>
+<body data-feed-url="{% url 'photos:slideshow_feed' photo_settings.slideshow_token %}">
+<div class="slide-stage">
+    <div class="slide-bg" data-slide-bg></div>
+    <div class="slide-vignette"></div>
+    <main class="slide-content">
+        <div class="slide-frame" data-slide-frame>
+            <img data-slide-image alt="Wedding moment">
+            <div class="slide-loading" data-slide-empty>
+                <span>♡</span>
+                <h1>Waiting for moments</h1>
+                <p>Approved guest photos will appear here automatically.</p>
+            </div>
+        </div>
+        <div class="slide-caption" data-slide-caption></div>
+    </main>
+    <header class="slide-brand">
+        <p>Live wedding moments</p>
+        <h2>{{ wedding.groom_name|default:'Groom' }} <span>&</span> {{ wedding.bride_name|default:'Bride' }}</h2>
+    </header>
+    <footer class="slide-footer"><span data-slide-count>0 moments</span><span>{{ wedding.wedding_date|date:'d · m · Y' }}</span></footer>
+</div>
+<script src="{% static 'photos/js/slideshow.js' %}?v=10"></script>
+</body>
+</html>

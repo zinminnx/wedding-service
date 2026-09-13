@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Share a Moment · {{ wedding.name }}</title>
+    <link rel="stylesheet" href="{% static 'photos/css/guest_gallery.css' %}?v=10">
+</head>
+<body>
+<div class="guest-photo-shell">
+    <header class="guest-photo-hero">
+        <a class="guest-back" href="{% url 'invitations:detail' invitation.token %}">← Invitation</a>
+        <p class="guest-overline">{{ wedding.groom_name|default:'Groom' }} & {{ wedding.bride_name|default:'Bride' }}</p>
+        <h1>Share a Moment</h1>
+        <p>Dear {{ guest.name }}, add the photos you captured today and help us remember every beautiful detail.</p>
+        <div class="guest-heart">♡</div>
+    </header>
+
+    <main class="guest-photo-main">
+        {% if uploaded_count %}<div class="guest-success">✓ {{ uploaded_count }} photo{{ uploaded_count|pluralize }} received. Thank you for sharing.</div>{% endif %}
+        {% for error in upload_errors %}<div class="guest-error">{{ error }}</div>{% endfor %}
+
+        <section class="guest-card guest-upload-card">
+            <div class="guest-section-title"><span>01</span><div><p>From your camera roll</p><h2>Add your photos</h2></div></div>
+            {% if photo_settings.guest_upload_enabled %}
+            <form method="post" enctype="multipart/form-data" data-guest-upload-form>
+                {% csrf_token %}
+                <label class="guest-dropzone">
+                    <input type="file" name="photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple required data-guest-files>
+                    <span class="guest-camera">⌑</span>
+                    <strong>Choose photos</strong>
+                    <small>Up to {{ photo_settings.max_files_per_upload }} at a time · {{ photo_settings.max_upload_mb }} MB each</small>
+                    <em data-guest-file-label>Tap to browse or open your camera</em>
+                </label>
+                <label class="guest-caption"><span>A note for the couple <small>(optional)</small></span><textarea name="caption" rows="3" maxlength="280" placeholder="The dance floor was unforgettable..."></textarea></label>
+                <button class="guest-primary" type="submit">Share These Moments</button>
+                <p class="guest-limit">Wedding gallery capacity: {{ current_photo_count }} / {{ photo_limit }} photos · {{ remaining }} remaining</p>
+            </form>
+            {% else %}
+            <div class="guest-closed"><span>♡</span><h3>Uploads are closed for now</h3><p>The couple has temporarily paused guest photo uploads.</p></div>
+            {% endif %}
+        </section>
+
+        <section class="guest-card">
+            <div class="guest-section-title"><span>02</span><div><p>Your contribution</p><h2>Your shared moments</h2></div></div>
+            {% if own_photos %}
+            <div class="guest-photo-grid">
+                {% for photo in own_photos %}
+                <article class="guest-photo-item">
+                    <img src="{{ photo.image.url }}" alt="Your wedding photo" loading="lazy">
+                    <div class="guest-photo-info">
+                        <div><strong>{{ photo.created_at|date:'d M Y' }}</strong><span class="guest-state state-{{ photo.status|lower }}">{{ photo.get_status_display }}</span></div>
+                        {% if photo.caption %}<p>{{ photo.caption }}</p>{% endif %}
+                        {% if photo_settings.guest_can_download_own %}<a href="{% url 'photos:guest_download' invitation.token photo.public_id %}">Download original</a>{% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="guest-empty"><span>✦</span><h3>Your gallery starts here</h3><p>Photos you upload will appear in this private list.</p></div>
+            {% endif %}
+        </section>
+
+        <p class="guest-privacy">Only the wedding owner and authorized photo staff can review pending photos. Approved photos may appear on the wedding's private live slideshow.</p>
+    </main>
+</div>
+<script src="{% static 'photos/js/guest_gallery.js' %}?v=10"></script>
+</body>
+</html>
