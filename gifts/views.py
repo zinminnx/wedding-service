@@ -4,22 +4,15 @@ from django.db.models import Sum
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 
-from weddings.models import Wedding
+from staffing.access import PERM_MANAGE_GIFTS, get_wedding_for_user
 
 from .forms import GiftPaymentMethodForm, GiftSettingsForm
 from .models import GiftPaymentMethod, GiftSettings, GuestGiftDeclaration
 
 
-def _wedding_for_user(user):
-    qs = Wedding.objects.all()
-    if not user.is_superuser:
-        qs = qs.filter(owner=user)
-    return qs.order_by("-created_at").first()
-
-
 @login_required
 def gift_dashboard(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_GIFTS)
     if not wedding:
         messages.info(request, "Create your wedding first.")
         return redirect("weddings:overview")
@@ -103,7 +96,7 @@ def gift_dashboard(request):
 def payment_method_action(request, method_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_GIFTS)
     if not wedding:
         raise Http404("Wedding not found")
     item = get_object_or_404(GiftPaymentMethod, pk=method_id, wedding=wedding)
@@ -127,7 +120,7 @@ def declaration_action(request, declaration_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_GIFTS)
     if not wedding:
         raise Http404("Wedding not found")
 

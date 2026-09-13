@@ -11,20 +11,13 @@ from django.utils import timezone
 
 from gifts.models import GiftSettings
 from invitations.models import Invitation
-from weddings.models import Wedding
+from staffing.access import PERM_CHECK_IN, get_wedding_for_user
 
 from .models import CheckIn
 
 
-def _wedding_for_user(user):
-    qs = Wedding.objects.all()
-    if not user.is_superuser:
-        qs = qs.filter(owner=user)
-    return qs.order_by("-created_at").first()
-
-
 def _owned_invitation(user, qr_token):
-    wedding = _wedding_for_user(user)
+    wedding = get_wedding_for_user(user, PERM_CHECK_IN)
     if not wedding:
         raise Http404("Wedding not found")
     return get_object_or_404(
@@ -53,7 +46,7 @@ def qr_image(request, qr_token):
 
 @login_required
 def dashboard(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_CHECK_IN)
     rows = []
     q = request.GET.get("q", "").strip()
 

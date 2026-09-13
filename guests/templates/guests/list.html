@@ -8,9 +8,9 @@
         <h1>Guests</h1>
         <p class="lead">Manage your guest list, groups and invitation readiness.</p>
     </div>
-    {% if wedding %}
+    {% if wedding and access.manage_guests %}
         <a class="btn" href="{% url 'guests:add' %}">+ Add Guest</a>
-    {% else %}
+    {% elif not wedding and access.can_create_wedding %}
         <a class="btn" href="{% url 'weddings:overview' %}">Create Wedding First</a>
     {% endif %}
 </div>
@@ -79,14 +79,14 @@
                         <td>{{ guest.allowed_party_size }}</td>
                         <td><span class="badge {% if guest.status == 'ACTIVE' %}success{% else %}neutral{% endif %}">{{ guest.get_status_display }}</span></td>
                         <td><code>{{ guest.public_id }}</code></td>
-                        <td><a class="row-action" href="{% url 'guests:edit' guest.public_id %}">Edit</a></td>
+                        <td>{% if access.manage_guests %}<a class="row-action" href="{% url 'guests:edit' guest.public_id %}">Edit</a>{% else %}<span class="muted">View only</span>{% endif %}</td>
                     </tr>
                 {% empty %}
                     <tr>
                         <td colspan="7" class="empty-state guest-empty">
                             <strong>No guests yet.</strong>
                             <span>Add your first guest to start creating invitations.</span>
-                            {% if wedding %}<a class="btn" href="{% url 'guests:add' %}">+ Add first guest</a>{% endif %}
+                            {% if wedding and access.manage_guests %}<a class="btn" href="{% url 'guests:add' %}">+ Add first guest</a>{% endif %}
                         </td>
                     </tr>
                 {% endfor %}

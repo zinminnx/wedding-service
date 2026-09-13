@@ -2,21 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from invitations.models import Invitation
-from weddings.models import Wedding
+from staffing.access import PERM_VIEW_RSVP, get_wedding_for_user
 
 from .models import RSVP
 
 
-def _wedding_for_user(user):
-    qs = Wedding.objects.all()
-    if not user.is_superuser:
-        qs = qs.filter(owner=user)
-    return qs.order_by("-created_at").first()
-
-
 @login_required
 def rsvp_list(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_VIEW_RSVP)
     invitations = Invitation.objects.none()
 
     if wedding:
@@ -51,9 +44,5 @@ def rsvp_list(request):
     return render(
         request,
         "rsvp/list.html",
-        {
-            "wedding": wedding,
-            "invitations": invitations,
-            "counts": counts,
-        },
+        {"wedding": wedding, "invitations": invitations, "counts": counts},
     )

@@ -6,21 +6,19 @@ from django.shortcuts import redirect, render
 from guests.models import Guest
 from invitations.models import Invitation
 from rsvp.models import RSVP
+from staffing.access import (
+    PERM_MANAGE_WEDDING,
+    PERM_VIEW_DASHBOARD,
+    can_create_wedding,
+    get_wedding_for_user,
+)
 
 from .forms import WeddingForm
-from .models import Wedding
-
-
-def _wedding_for_user(user):
-    qs = Wedding.objects.select_related("owner")
-    if not user.is_superuser:
-        qs = qs.filter(owner=user)
-    return qs.order_by("-created_at").first()
 
 
 @login_required
 def dashboard(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_VIEW_DASHBOARD)
 
     stats = {
         "guests": 0,
@@ -74,8 +72,17 @@ def dashboard(request):
 
 @login_required
 def wedding_overview(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_WEDDING)
+    any_wedding = get_wedding_for_user(request.user)
+
+    if wedding is None and any_wedding is not None:
+        messages.error(request, "Your role does not allow editing wedding settings.")
+        return redirect("weddings:dashboard")
+
     creating = wedding is None
+    if creating and not can_create_wedding(request.user):
+        messages.error(request, "Your account is not allowed to create a wedding workspace.")
+        return redirect("weddings:dashboard")
 
     if request.method == "POST":
         form = WeddingForm(request.POST, instance=wedding)
@@ -87,7 +94,7 @@ def wedding_overview(request):
 
             action = request.POST.get("action", "save")
             if action == "draft":
-                wedding.status = Wedding.Status.DRAFT
+                wedding.status = wedding.Status.DRAFT
 
             wedding.save()
             form.save_m2m()

@@ -1,0 +1,54 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}{% if editing %}Edit Staff{% else %}Add Staff{% endif %} · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=7">{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">Team & Security</p>
+        <h1>{% if editing %}Edit Staff Access{% else %}Add Staff{% endif %}</h1>
+        <p class="lead">{% if editing %}Update this account's role or access status.{% else %}Use an existing account or create a new staff login.{% endif %}</p>
+    </div>
+    <a class="btn btn-soft" href="{% url 'staffing:list' %}">Back to Staff</a>
+</div>
+
+<div class="staff-form-layout">
+    <section class="panel staff-form-card">
+        {% if editing %}
+            <div class="staff-account-preview">
+                <div class="avatar">{{ membership.user.username|slice:':1'|upper }}</div>
+                <div><strong>{{ membership.user.get_full_name|default:membership.user.username }}</strong><span>{{ membership.user.email|default:membership.user.username }}</span></div>
+            </div>
+        {% endif %}
+
+        <form method="post" class="staff-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+            {% if editing %}
+                <label><span>Wedding role</span>{{ form.role }}{% if form.role.errors %}<small class="field-error">{{ form.role.errors|striptags }}</small>{% endif %}</label>
+                <label><span>Access status</span>{{ form.status }}{% if form.status.errors %}<small class="field-error">{{ form.status.errors|striptags }}</small>{% endif %}</label>
+            {% else %}
+                <div class="two-col">
+                    <label><span>Username</span>{{ form.username }}{% if form.username.errors %}<small class="field-error">{{ form.username.errors|striptags }}</small>{% endif %}</label>
+                    <label><span>Email</span>{{ form.email }}{% if form.email.errors %}<small class="field-error">{{ form.email.errors|striptags }}</small>{% endif %}</label>
+                    <label><span>First name</span>{{ form.first_name }}</label>
+                    <label><span>Last name</span>{{ form.last_name }}</label>
+                    <label><span>Phone</span>{{ form.phone }}</label>
+                    <label><span>Wedding role</span>{{ form.role }}</label>
+                </div>
+                <label><span>Password</span>{{ form.password }}{% if form.password.errors %}<small class="field-error">{{ form.password.errors|striptags }}</small>{% endif %}<small>If username/email already belongs to an existing account, leave password blank. New accounts require at least 8 characters.</small></label>
+            {% endif %}
+
+            <div class="form-actions"><button class="btn" type="submit">{% if editing %}Save Access{% else %}Add Staff{% endif %}</button></div>
+        </form>
+    </section>
+
+    <aside class="panel access-note-card">
+        <p class="eyebrow">Access Rule</p>
+        <h2>Least privilege by default</h2>
+        <p>Reception staff cannot edit wedding details, gifts or guest records. Viewer accounts cannot make changes. Staff access is scoped only to this wedding.</p>
+        <div class="security-points"><span>Wedding-scoped membership</span><span>Role-based navigation</span><span>Server-side permission checks</span><span>Owner access stays permanent</span></div>
+    </aside>
+</div>
+{% endblock %}

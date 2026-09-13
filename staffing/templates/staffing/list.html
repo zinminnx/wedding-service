@@ -1,0 +1,81 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Staff & Access · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=7">{% endblock %}
+{% block content %}
+<div class="page-head staff-page-head">
+    <div>
+        <p class="eyebrow">Team & Security</p>
+        <h1>Staff & Access</h1>
+        <p class="lead">Give each team member only the access they need for this wedding.</p>
+    </div>
+    <a class="btn" href="{% url 'staffing:add' %}">+ Add Staff</a>
+</div>
+
+<div class="staff-stats">
+    <div class="staff-stat"><span>Active staff</span><strong>{{ counts.active }}</strong></div>
+    <div class="staff-stat"><span>Managers</span><strong>{{ counts.managers }}</strong></div>
+    <div class="staff-stat"><span>Reception</span><strong>{{ counts.reception }}</strong></div>
+    <div class="staff-stat owner-stat"><span>Owner</span><strong>1</strong></div>
+</div>
+
+<div class="panel owner-access-card">
+    <div class="owner-badge">OWNER</div>
+    <div>
+        <strong>{{ wedding.owner.get_full_name|default:wedding.owner.username }}</strong>
+        <span>{{ wedding.owner.email|default:'Wedding owner account' }}</span>
+    </div>
+    <div class="owner-access-note">Full access · cannot be removed here</div>
+</div>
+
+<div class="panel staff-table-panel">
+    <div class="panel-head">
+        <div><p class="eyebrow">Assigned Accounts</p><h2>Wedding Team</h2></div>
+        <span class="soft-pill">{{ wedding.name }}</span>
+    </div>
+    <div class="table-scroll">
+        <table class="staff-table">
+            <thead><tr><th>Staff</th><th>Role</th><th>Status</th><th>Access summary</th><th></th></tr></thead>
+            <tbody>
+            {% for item in memberships %}
+                <tr>
+                    <td>
+                        <div class="person-cell">
+                            <div class="avatar small">{{ item.user.username|slice:':1'|upper }}</div>
+                            <div><strong>{{ item.user.get_full_name|default:item.user.username }}</strong><span>{{ item.user.email|default:item.user.username }}</span></div>
+                        </div>
+                    </td>
+                    <td><span class="role-chip role-{{ item.role|lower }}">{{ item.get_role_display }}</span></td>
+                    <td><span class="badge {% if item.status == 'ACTIVE' %}success{% else %}neutral{% endif %}">{{ item.get_status_display }}</span></td>
+                    <td class="access-summary">
+                        {% if item.role == 'WEDDING_MANAGER' %}Wedding, guests, invitations, RSVP, gifts, check-in, staff
+                        {% elif item.role == 'RECEPTION_STAFF' %}Dashboard, RSVP, reception check-in
+                        {% elif item.role == 'PHOTO_STAFF' %}Dashboard, photos
+                        {% elif item.role == 'PRINT_STAFF' %}Dashboard, printing
+                        {% else %}Dashboard, guests, invitations, RSVP{% endif %}
+                    </td>
+                    <td>
+                        <div class="staff-actions">
+                            <a href="{% url 'staffing:edit' item.id %}">Edit</a>
+                            {% if item.status == 'ACTIVE' and item.user_id != request.user.id %}
+                            <form method="post" action="{% url 'staffing:disable' item.id %}" onsubmit="return confirm('Deactivate this staff access?');">{% csrf_token %}<button type="submit">Disable</button></form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="empty-state"><strong>No staff assigned yet.</strong><span>Add reception, photo or management staff when you are ready.</span><a class="btn" href="{% url 'staffing:add' %}">+ Add first staff</a></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="role-guide-grid">
+    <article><b>Wedding Manager</b><span>Can manage most wedding operations and staff.</span></article>
+    <article><b>Reception Staff</b><span>RSVP visibility and entrance check-in only.</span></article>
+    <article><b>Photo Staff</b><span>Reserved for the upcoming photo workflow.</span></article>
+    <article><b>Print Staff</b><span>Reserved for the upcoming print workflow.</span></article>
+    <article><b>Viewer</b><span>Read-only access to guests, invitations and RSVP.</span></article>
+</div>
+{% endblock %}

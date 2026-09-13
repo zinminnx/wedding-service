@@ -1,11 +1,12 @@
-{% load static %}
+{% load static staffing_tags %}
+{% wedding_access request.user wedding as access %}
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}EverAfter{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=7">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -18,21 +19,40 @@
 
         <nav class="nav-list">
             <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'weddings' %}active{% endif %}" href="{% url 'weddings:dashboard' %}">Dashboard</a>
+
+            {% if access.manage_wedding or access.can_create_wedding %}
             <a class="nav-item {% if request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'weddings:overview' %}">My Wedding</a>
+            {% endif %}
+
+            {% if access.view_guests %}
             <a class="nav-item {% if request.resolver_match.namespace == 'guests' %}active{% endif %}" href="{% url 'guests:list' %}">Guests</a>
-            <a class="nav-item {% if request.resolver_match.namespace == 'invitations' %}active{% endif %}" href="{% url 'invitations:list' %}">Invitations</a>
+            {% endif %}
+
+            {% if access.view_invitations %}
+            <a class="nav-item {% if request.resolver_match.namespace == 'invitations' and request.resolver_match.url_name != 'detail' %}active{% endif %}" href="{% url 'invitations:list' %}">Invitations</a>
+            {% endif %}
+
+            {% if access.view_rsvp %}
             <a class="nav-item {% if request.resolver_match.namespace == 'rsvp' %}active{% endif %}" href="{% url 'rsvp:list' %}">RSVP</a>
+            {% endif %}
+
+            {% if access.check_in %}
             <a class="nav-item {% if request.resolver_match.namespace == 'checkins' %}active{% endif %}" href="{% url 'checkins:dashboard' %}">Check-in</a>
-            <a class="nav-item disabled" href="#">Photos</a>
-            <a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>
-            <a class="nav-item disabled" href="#">Printing</a>
-            <a class="nav-item disabled" href="#">Settings</a>
+            {% endif %}
+
+            {% if access.photo %}<a class="nav-item disabled" href="#">Photos</a>{% endif %}
+            {% if access.manage_gifts %}<a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>{% endif %}
+            {% if access.print %}<a class="nav-item disabled" href="#">Printing</a>{% endif %}
+
+            {% if access.manage_staff %}
+            <a class="nav-item {% if request.resolver_match.namespace == 'staffing' %}active{% endif %}" href="{% url 'staffing:list' %}">Staff & Access</a>
+            {% endif %}
         </nav>
 
         <div class="sidebar-quote"><span>Beautiful</span><span>Moments</span><span>Last Forever</span></div>
         <div class="sidebar-footer">
             <div class="avatar">{{ request.user.username|slice:':1'|upper }}</div>
-            <div class="sidebar-user"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><span>{{ request.user.role|default:'Wedding Owner'|title }}</span></div>
+            <div class="sidebar-user"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><span>{{ access.role_label }}</span></div>
         </div>
     </aside>
 
@@ -41,8 +61,8 @@
             <div class="search-box">Search guests, invitations, photos...</div>
             <div class="topbar-right">
                 {% if wedding %}
-                    <div class="wedding-switcher"><span class="switcher-dot"></span><div><small>My Wedding</small><strong>{{ wedding.name }}</strong></div></div>
-                {% else %}
+                    <div class="wedding-switcher"><span class="switcher-dot"></span><div><small>{{ access.role_label }}</small><strong>{{ wedding.name }}</strong></div></div>
+                {% elif access.can_create_wedding %}
                     <a class="text-link" href="{% url 'weddings:overview' %}">Create wedding</a>
                 {% endif %}
                 <a class="text-link" href="{% url 'accounts:logout' %}">Sign out</a>

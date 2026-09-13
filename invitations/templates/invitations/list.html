@@ -13,7 +13,7 @@
         <h1>Invitations</h1>
         <p class="lead">Create personal invitation links, track opens and manage delivery.</p>
     </div>
-    {% if wedding %}
+    {% if wedding and access.manage_invitations %}
         <form method="post" action="{% url 'invitations:generate_missing' %}">
             {% csrf_token %}
             <button class="btn" type="submit">Generate Missing Invitations</button>
@@ -102,6 +102,7 @@
                             {% endif %}
                         </td>
                         <td>
+                            {% if access.manage_invitations %}
                             <div class="row-actions">
                                 {% if not row.invitation %}
                                     <form method="post" action="{% url 'invitations:generate_guest' row.guest.public_id %}">
@@ -131,6 +132,7 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
+                            {% else %}<span class="muted">View only</span>{% endif %}
                         </td>
                     </tr>
                 {% empty %}
@@ -139,10 +141,10 @@
                             {% if wedding %}
                                 <strong>No guests match this filter.</strong>
                                 <span>Add guests first, then invitations can be created automatically.</span>
-                                <a class="btn" href="{% url 'guests:add' %}">+ Add Guest</a>
+                                {% if access.manage_guests %}<a class="btn" href="{% url 'guests:add' %}">+ Add Guest</a>{% endif %}
                             {% else %}
                                 <strong>No wedding selected.</strong>
-                                <a class="btn" href="{% url 'weddings:overview' %}">Create Wedding</a>
+                                {% if access.can_create_wedding %}<a class="btn" href="{% url 'weddings:overview' %}">Create Wedding</a>{% endif %}
                             {% endif %}
                         </td>
                     </tr>

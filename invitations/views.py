@@ -10,7 +10,11 @@ from django.utils import timezone
 from guests.models import Guest
 from rsvp.models import RSVP
 from gifts.models import GiftPaymentMethod, GiftSettings, GuestGiftDeclaration
-from weddings.models import Wedding
+from staffing.access import (
+    PERM_MANAGE_INVITATIONS,
+    PERM_VIEW_INVITATIONS,
+    get_wedding_for_user,
+)
 
 from .models import Invitation
 
@@ -158,15 +162,8 @@ def invitation_detail(request, token):
         },
     )
 
-def _wedding_for_user(user):
-    qs = Wedding.objects.all()
-    if not user.is_superuser:
-        qs = qs.filter(owner=user)
-    return qs.order_by("-created_at").first()
-
-
 def _owned_invitation(user, invitation_id):
-    wedding = _wedding_for_user(user)
+    wedding = get_wedding_for_user(user, PERM_MANAGE_INVITATIONS)
     if not wedding:
         raise Http404("Wedding not found")
     return get_object_or_404(
@@ -178,7 +175,7 @@ def _owned_invitation(user, invitation_id):
 
 @login_required
 def invitation_list(request):
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_VIEW_INVITATIONS)
     rows = []
     counts = {
         "guests": 0,
@@ -263,7 +260,7 @@ def generate_missing_invitations(request):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_INVITATIONS)
     if not wedding:
         messages.info(request, "Create your wedding first.")
         return redirect("weddings:overview")
@@ -291,7 +288,7 @@ def generate_guest_invitation(request, guest_public_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
-    wedding = _wedding_for_user(request.user)
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_INVITATIONS)
     if not wedding:
         raise Http404("Wedding not found")
 

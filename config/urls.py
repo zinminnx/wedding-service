@@ -10,6 +10,7 @@ urlpatterns = [
     path("dashboard/guests/", include("guests.urls")),
     path("dashboard/rsvp/", include("rsvp.urls")),
     path("dashboard/gifts/", include("gifts.urls")),
+    path("dashboard/staff/", include("staffing.urls")),
     path("", include("checkins.urls")),
     path("", include("invitations.urls")),
 ]
