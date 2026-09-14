@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "planner",
     "vendors",
     "financial_docs",
+    "integrations",
     "rsvp",
     "payment_providers",
     "gifts",
@@ -174,3 +175,11 @@ AUTH_USER_MODEL = "accounts.User"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+
+# EverAfter v12.0 - Microsoft Graph / OneDrive
+GRAPH_TENANT_ID = os.getenv("GRAPH_TENANT_ID", "")
+GRAPH_CLIENT_ID = os.getenv("GRAPH_CLIENT_ID", "")
+GRAPH_CLIENT_SECRET = os.getenv("GRAPH_CLIENT_SECRET", "")
+GRAPH_DRIVE_ID = os.getenv("GRAPH_DRIVE_ID", "")
+GRAPH_ROOT_FOLDER = os.getenv("GRAPH_ROOT_FOLDER", "EverAfter")
+GRAPH_TIMEOUT_SECONDS = int(os.getenv("GRAPH_TIMEOUT_SECONDS", "20"))

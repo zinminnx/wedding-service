@@ -71,7 +71,7 @@
                     <article class="photo-tile">
                         <label class="photo-select"><input type="checkbox" name="photo_ids" value="{{ photo.public_id }}" data-photo-checkbox><span></span></label>
                         <div class="photo-image-wrap">
-                            <img src="{{ photo.image.url }}" alt="Wedding photo {{ photo.public_id }}" loading="lazy">
+                            <img src="{% url 'photos:staff_file' photo.public_id %}" alt="Wedding photo {{ photo.public_id }}" loading="lazy">
                             <span class="photo-status status-{{ photo.status|lower }}">{{ photo.get_status_display }}</span>
                         </div>
                         <div class="photo-tile-body">
@@ -81,7 +81,7 @@
                             </div>
                             <h3>{% if photo.guest %}{{ photo.guest.name }}{% else %}{{ photo.get_source_display }} upload{% endif %}</h3>
                             {% if photo.caption %}<p class="photo-caption">{{ photo.caption }}</p>{% endif %}
-                            <p class="photo-file">{{ photo.original_filename|truncatechars:34 }} · {{ photo.file_size|filesizeformat }}</p>
+                            <p class="photo-file">{{ photo.original_filename|truncatechars:34 }} · {{ photo.file_size|filesizeformat }} · {% if photo.storage_object %}{{ photo.storage_object.get_backend_display }}{% else %}Legacy Local{% endif %}</p>
                             <div class="photo-tile-actions">
                                 {% if photo.status != 'APPROVED' %}
                                 <button type="submit" formaction="{% url 'photos:photo_action' photo.public_id %}" name="action" value="approve" class="photo-action-good">Approve</button>

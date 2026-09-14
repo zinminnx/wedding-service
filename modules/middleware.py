@@ -14,6 +14,7 @@ NAMESPACE_MODULES = {
     "transportation": "transportation",
     "budgeting": "budgeting",
     "financial_docs": "budgeting",
+    "integrations": "onedrive",
     "planner": "planner",
     "vendors": "vendors",
     "invitation_themes": "invitation_themes",
@@ -64,11 +65,11 @@ class ModuleGateMiddleware(MiddlewareMixin):
         if not token:
             return None
         try:
-            if match.url_name in {"guest_upload", "guest_download"}:
+            if match.url_name in {"guest_upload", "guest_download", "guest_file"}:
                 from invitations.models import Invitation
                 invitation = Invitation.objects.select_related("wedding").filter(token=token).first()
                 return invitation.wedding if invitation else None
-            if match.url_name in {"slideshow", "slideshow_feed"}:
+            if match.url_name in {"slideshow", "slideshow_feed", "slideshow_file"}:
                 from photos.models import WeddingPhotoSettings
                 settings_obj = WeddingPhotoSettings.objects.select_related("wedding").filter(slideshow_token=token).first()
                 return settings_obj.wedding if settings_obj else None

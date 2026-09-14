@@ -1,4 +1,5 @@
 import tempfile
+from io import BytesIO
 import zipfile
 from pathlib import Path
 
@@ -20,6 +21,12 @@ from staffing.access import (
 )
 
 from .models import WeddingPhoto, WeddingPhotoSettings
+from .storage_backend import (
+    create_photo_with_storage,
+    delete_photo_file,
+    photo_content_type,
+    read_photo_bytes,
+)
 
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -71,18 +78,15 @@ def _photo_status_for_upload(photo_settings):
 def _create_photo(*, wedding, photo_settings, uploaded, source, guest=None, invitation=None, uploaded_by=None, caption=""):
     status = _photo_status_for_upload(photo_settings)
     now = timezone.now()
-    return WeddingPhoto.objects.create(
+    return create_photo_with_storage(
         wedding=wedding,
+        uploaded=uploaded,
+        source=source,
+        status=status,
         guest=guest,
         invitation=invitation,
         uploaded_by=uploaded_by,
-        source=source,
-        image=uploaded,
-        original_filename=_safe_name(uploaded.name, "photo"),
-        mime_type=(getattr(uploaded, "content_type", "") or "")[:80],
-        file_size=uploaded.size,
-        caption=(caption or "")[:280],
-        status=status,
+        caption=caption,
         approved_at=now if status == WeddingPhoto.Status.APPROVED else None,
     )
 
@@ -97,20 +101,15 @@ def _staff_wedding(request):
 def _staff_photo(request, public_id):
     wedding = _staff_wedding(request)
     return get_object_or_404(
-        WeddingPhoto.objects.select_related("guest", "wedding"),
+        WeddingPhoto.objects.select_related("guest", "wedding", "storage_object"),
         wedding=wedding,
         public_id=public_id,
     )
 
 
 def _delete_photo(photo):
-    storage_file = photo.image
+    delete_photo_file(photo)
     photo.delete()
-    try:
-        storage_file.delete(save=False)
-    except Exception:
-        # The database record is the source of truth; orphan cleanup can be retried later.
-        pass
 
 
 def _set_status(photo, status, user):
@@ -127,8 +126,6 @@ def _zip_response(photos, filename):
     used_names = set()
     with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for photo in photos:
-            if not photo.image:
-                continue
             original = _safe_name(photo.original_filename, f"{photo.public_id}.jpg")
             stem = Path(original).stem[:120] or photo.public_id
             suffix = Path(original).suffix[:10]
@@ -137,15 +134,22 @@ def _zip_response(photos, filename):
                 member_name = f"{stem}-{photo.public_id}{suffix}"
             used_names.add(member_name.lower())
             try:
-                photo.image.open("rb")
-                archive.writestr(member_name, photo.image.read())
-            finally:
-                try:
-                    photo.image.close()
-                except Exception:
-                    pass
+                archive.writestr(member_name, read_photo_bytes(photo))
+            except Exception:
+                continue
     stream.seek(0)
     return FileResponse(stream, as_attachment=True, filename=filename, content_type="application/zip")
+
+
+def _inline_photo_response(photo):
+    try:
+        content = read_photo_bytes(photo)
+    except Exception as exc:
+        raise Http404("Photo file not found") from exc
+    response = FileResponse(BytesIO(content), content_type=photo_content_type(photo))
+    response["Content-Disposition"] = f'inline; filename="{_safe_name(photo.original_filename, photo.public_id)}"'
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @login_required
@@ -153,7 +157,7 @@ def dashboard(request):
     wedding = _staff_wedding(request)
     photo_settings = _settings_for(wedding)
 
-    photos = WeddingPhoto.objects.filter(wedding=wedding).select_related("guest", "moderated_by")
+    photos = WeddingPhoto.objects.filter(wedding=wedding).select_related("guest", "moderated_by", "storage_object")
     q = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip().upper()
     source = request.GET.get("source", "").strip().upper()
@@ -259,15 +263,18 @@ def staff_upload(request):
         if error:
             errors.append(error)
             continue
-        _create_photo(
-            wedding=wedding,
-            photo_settings=photo_settings,
-            uploaded=uploaded,
-            source=source,
-            uploaded_by=request.user,
-            caption=caption,
-        )
-        created += 1
+        try:
+            _create_photo(
+                wedding=wedding,
+                photo_settings=photo_settings,
+                uploaded=uploaded,
+                source=source,
+                uploaded_by=request.user,
+                caption=caption,
+            )
+            created += 1
+        except Exception as exc:
+            errors.append(f"Storage upload failed for {uploaded.name}: {exc}")
 
     if created:
         messages.success(request, f"{created} photo(s) uploaded.")
@@ -341,15 +348,24 @@ def bulk_action(request):
 
 
 @login_required
+def staff_file(request, public_id):
+    photo = _staff_photo(request, public_id)
+    return _inline_photo_response(photo)
+
+
+@login_required
 def staff_download(request, public_id):
     photo = _staff_photo(request, public_id)
-    if not photo.image:
-        raise Http404("Photo file not found")
     WeddingPhoto.objects.filter(pk=photo.pk).update(download_count=F("download_count") + 1)
+    try:
+        content = read_photo_bytes(photo)
+    except Exception as exc:
+        raise Http404("Photo file not found") from exc
     return FileResponse(
-        photo.image.open("rb"),
+        BytesIO(content),
         as_attachment=True,
         filename=_safe_name(photo.original_filename, f"{photo.public_id}.jpg"),
+        content_type=photo_content_type(photo),
     )
 
 
@@ -397,16 +413,19 @@ def guest_gallery(request, token):
                         if error:
                             upload_errors.append(error)
                             continue
-                        _create_photo(
-                            wedding=wedding,
-                            photo_settings=photo_settings,
-                            uploaded=uploaded,
-                            source=WeddingPhoto.Source.GUEST,
-                            guest=guest,
-                            invitation=invitation,
-                            caption=caption,
-                        )
-                        uploaded_count += 1
+                        try:
+                            _create_photo(
+                                wedding=wedding,
+                                photo_settings=photo_settings,
+                                uploaded=uploaded,
+                                source=WeddingPhoto.Source.GUEST,
+                                guest=guest,
+                                invitation=invitation,
+                                caption=caption,
+                            )
+                            uploaded_count += 1
+                        except Exception as exc:
+                            upload_errors.append(f"Storage upload failed for {uploaded.name}: {exc}")
                     if uploaded_count and not upload_errors:
                         return redirect(f"{reverse('photos:guest_upload', args=[token])}?uploaded={uploaded_count}")
 
@@ -434,23 +453,40 @@ def guest_gallery(request, token):
     )
 
 
+def guest_file(request, token, public_id):
+    invitation = _public_invitation(token)
+    photo = get_object_or_404(
+        WeddingPhoto.objects.select_related("storage_object"),
+        public_id=public_id,
+        wedding=invitation.wedding,
+        guest=invitation.guest,
+        invitation=invitation,
+    )
+    return _inline_photo_response(photo)
+
+
 def guest_download(request, token, public_id):
     invitation = _public_invitation(token)
     photo_settings = _settings_for(invitation.wedding)
     if not photo_settings.guest_can_download_own:
         raise Http404("Downloads are disabled")
     photo = get_object_or_404(
-        WeddingPhoto,
+        WeddingPhoto.objects.select_related("storage_object"),
         public_id=public_id,
         wedding=invitation.wedding,
         guest=invitation.guest,
         invitation=invitation,
     )
     WeddingPhoto.objects.filter(pk=photo.pk).update(download_count=F("download_count") + 1)
+    try:
+        content = read_photo_bytes(photo)
+    except Exception as exc:
+        raise Http404("Photo file not found") from exc
     return FileResponse(
-        photo.image.open("rb"),
+        BytesIO(content),
         as_attachment=True,
         filename=_safe_name(photo.original_filename, f"{photo.public_id}.jpg"),
+        content_type=photo_content_type(photo),
     )
 
 
@@ -470,6 +506,21 @@ def slideshow(request, token):
     )
 
 
+def slideshow_file(request, token, public_id):
+    photo_settings = get_object_or_404(
+        WeddingPhotoSettings.objects.select_related("wedding"),
+        slideshow_token=token,
+        slideshow_enabled=True,
+    )
+    photo = get_object_or_404(
+        WeddingPhoto.objects.select_related("storage_object"),
+        public_id=public_id,
+        wedding=photo_settings.wedding,
+        status=WeddingPhoto.Status.APPROVED,
+    )
+    return _inline_photo_response(photo)
+
+
 def slideshow_feed(request, token):
     photo_settings = get_object_or_404(
         WeddingPhotoSettings.objects.select_related("wedding"),
@@ -482,12 +533,12 @@ def slideshow_feed(request, token):
     ).order_by("created_at")[:500]
     payload = []
     for photo in photos:
-        if not photo.image:
-            continue
         payload.append(
             {
                 "id": photo.public_id,
-                "url": request.build_absolute_uri(photo.image.url),
+                "url": request.build_absolute_uri(
+                    reverse("photos:slideshow_file", args=[token, photo.public_id])
+                ),
                 "caption": photo.caption,
                 "created_at": photo.created_at.isoformat(),
             }

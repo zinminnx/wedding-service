@@ -1,0 +1,65 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Storage · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'integrations/css/storage.css' %}?v=12.0">{% endblock %}
+
+{% block content %}
+<div class="page-head storage-head">
+    <div>
+        <p class="eyebrow">Storage Infrastructure</p>
+        <h1>Storage & OneDrive</h1>
+        <p class="lead">Local development storage today, with a Microsoft Graph foundation ready for production media and archive workflows.</p>
+    </div>
+    <span class="storage-provider-pill provider-{{ settings_obj.provider|lower }}">{{ settings_obj.get_provider_display }}</span>
+</div>
+
+<div class="storage-summary-grid">
+    <div class="panel storage-stat"><span>Registered objects</span><strong>{{ counts.total }}</strong><small>v12 storage registry</small></div>
+    <div class="panel storage-stat"><span>Available</span><strong>{{ counts.available }}</strong><small>{{ counts.failed }} failed</small></div>
+    <div class="panel storage-stat"><span>Local</span><strong>{{ counts.local }}</strong><small>Registry entries on local media</small></div>
+    <div class="panel storage-stat"><span>OneDrive</span><strong>{{ counts.onedrive }}</strong><small>Registry entries on Microsoft Graph</small></div>
+</div>
+
+<div class="storage-grid">
+    <section class="panel storage-card">
+        <div class="storage-card-title"><div><p class="eyebrow">Current Policy</p><h2>{{ settings_obj.get_provider_display }}</h2></div><span class="health-badge health-{{ settings_obj.health_status|lower }}">{{ settings_obj.get_health_status_display }}</span></div>
+        <div class="storage-facts">
+            <div><span>Wedding</span><strong>{{ wedding.name }}</strong></div>
+            <div><span>Wedding ID</span><code>{{ wedding.public_id }}</code></div>
+            <div><span>OneDrive root</span><code>{{ remote_root }}</code></div>
+            <div><span>Local media root</span><code>{{ local_summary.media_root|default:'Not configured' }}</code></div>
+        </div>
+        {% if settings_obj.health_message %}<div class="storage-note">{{ settings_obj.health_message }}</div>{% endif %}
+        <p class="storage-copy">Changing the provider never deletes existing files. v12.0 only establishes the storage layer and registry; existing Photos and Financial Documents are migrated by later milestones.</p>
+    </section>
+
+    <section class="panel storage-card">
+        <div class="storage-card-title"><div><p class="eyebrow">Microsoft Graph</p><h2>OneDrive Connection</h2></div>{% if graph_configured %}<span class="ready-dot">Configured</span>{% else %}<span class="missing-dot">Needs setup</span>{% endif %}</div>
+        {% if graph_configured %}
+        <p class="storage-copy">Server credentials are present. Secrets are kept in environment variables and are never rendered in the browser or stored in EverAfter tables.</p>
+        {% else %}
+        <p class="storage-copy">Add the missing server environment variables before enabling OneDrive.</p>
+        <div class="missing-vars">{% for name in graph_missing %}<code>{{ name }}</code>{% endfor %}</div>
+        {% endif %}
+        <form method="post" class="storage-actions">{% csrf_token %}<button class="btn btn-soft" name="action" value="test_onedrive" type="submit">Test OneDrive Connection</button></form>
+        {% if can_change_provider %}
+        <div class="admin-storage-switch">
+            <span>Main Admin controls the active provider.</span>
+            <form method="post">{% csrf_token %}{% if settings_obj.provider == 'LOCAL' %}<button class="btn" name="action" value="use_onedrive" type="submit">Use OneDrive for future integrated writes</button>{% else %}<button class="btn btn-soft" name="action" value="use_local" type="submit">Use Local Media</button>{% endif %}</form>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<section class="panel storage-registry">
+    <div class="panel-head"><div><p class="eyebrow">Object Registry</p><h2>Recent storage objects</h2></div></div>
+    <div class="table-scroll">
+        <table>
+            <thead><tr><th>Created</th><th>Category</th><th>Backend</th><th>Status</th><th>Size</th><th>Path</th></tr></thead>
+            <tbody>
+            {% for item in recent_objects %}<tr><td>{{ item.created_at|date:'d M Y · g:i A' }}</td><td>{{ item.get_category_display }}</td><td>{{ item.get_backend_display }}</td><td>{{ item.get_status_display }}</td><td>{{ item.size_bytes }} B</td><td><code>{{ item.relative_path }}</code></td></tr>{% empty %}<tr><td colspan="6" class="empty-state">No v12 storage objects yet. This is expected until Photos/Documents are migrated to the storage service.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

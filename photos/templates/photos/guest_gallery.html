@@ -48,7 +48,7 @@
             <div class="guest-photo-grid">
                 {% for photo in own_photos %}
                 <article class="guest-photo-item">
-                    <img src="{{ photo.image.url }}" alt="Your wedding photo" loading="lazy">
+                    <img src="{% url 'photos:guest_file' invitation.token photo.public_id %}" alt="Your wedding photo" loading="lazy">
                     <div class="guest-photo-info">
                         <div><strong>{{ photo.created_at|date:'d M Y' }}</strong><span class="guest-state state-{{ photo.status|lower }}">{{ photo.get_status_display }}</span></div>
                         {% if photo.caption %}<p>{{ photo.caption }}</p>{% endif %}

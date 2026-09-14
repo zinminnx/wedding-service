@@ -68,6 +68,11 @@
             {% if access.manage_staff and 'staffing' in enabled_modules %}
             <a class="nav-item {% if request.resolver_match.namespace == 'staffing' %}active{% endif %}" href="{% url 'staffing:list' %}">Staff & Access</a>
             {% endif %}
+
+            {% if access.manage_wedding and 'onedrive' in enabled_modules %}
+            <a class="nav-item {% if request.resolver_match.namespace == 'integrations' %}active{% endif %}" href="{% url 'integrations:storage_dashboard' %}">Storage</a>
+            {% endif %}
+
         </nav>
 
                     {% if access.planner and 'vendors' in enabled_modules %}

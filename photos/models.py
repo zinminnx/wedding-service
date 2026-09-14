@@ -94,7 +94,14 @@ class WeddingPhoto(models.Model):
         related_name="uploaded_wedding_photos",
     )
     source = models.CharField(max_length=12, choices=Source.choices, default=Source.GUEST)
-    image = models.FileField(upload_to=photo_upload_to)
+    image = models.FileField(upload_to=photo_upload_to, blank=True)
+    storage_object = models.OneToOneField(
+        "integrations.StoredObject",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="wedding_photo",
+    )
     original_filename = models.CharField(max_length=255, blank=True)
     mime_type = models.CharField(max_length=80, blank=True)
     file_size = models.PositiveBigIntegerField(default=0)
