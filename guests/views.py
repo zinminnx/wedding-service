@@ -60,6 +60,22 @@ def _managed_wedding_or_redirect(request):
     return wedding
 
 
+def _duplicate_confirmation_required(request, form):
+    return bool(form.duplicate_warnings) and request.POST.get("confirm_duplicate") != "1"
+
+
+def _guest_form_context(wedding, form, editing, guest=None):
+    return {
+        "wedding": wedding,
+        "form": form,
+        "editing": editing,
+        "guest": guest,
+        "duplicate_warnings": form.duplicate_warnings,
+        "duplicate_matches": form.duplicate_matches,
+        "duplicate_confirmation_required": bool(form.duplicate_warnings),
+    }
+
+
 @login_required
 def guest_create(request):
     wedding = _managed_wedding_or_redirect(request)
@@ -69,6 +85,10 @@ def guest_create(request):
     if request.method == "POST":
         form = GuestForm(request.POST, wedding=wedding)
         if form.is_valid():
+            if _duplicate_confirmation_required(request, form):
+                messages.warning(request, "Possible duplicate found. Review the matches and confirm before saving.")
+                return render(request, "guests/form.html", _guest_form_context(wedding, form, False))
+
             guest = form.save()
             Invitation.objects.get_or_create(
                 wedding=wedding,
@@ -82,11 +102,7 @@ def guest_create(request):
     else:
         form = GuestForm(wedding=wedding)
 
-    return render(
-        request,
-        "guests/form.html",
-        {"wedding": wedding, "form": form, "editing": False},
-    )
+    return render(request, "guests/form.html", _guest_form_context(wedding, form, False))
 
 
 @login_required
@@ -100,6 +116,10 @@ def guest_edit(request, public_id):
     if request.method == "POST":
         form = GuestForm(request.POST, instance=guest, wedding=wedding)
         if form.is_valid():
+            if _duplicate_confirmation_required(request, form):
+                messages.warning(request, "Possible duplicate found. Review the matches and confirm before saving.")
+                return render(request, "guests/form.html", _guest_form_context(wedding, form, True, guest))
+
             guest = form.save()
             Invitation.objects.get_or_create(
                 wedding=wedding,
@@ -111,8 +131,4 @@ def guest_edit(request, public_id):
     else:
         form = GuestForm(instance=guest, wedding=wedding)
 
-    return render(
-        request,
-        "guests/form.html",
-        {"wedding": wedding, "form": form, "editing": True, "guest": guest},
-    )
+    return render(request, "guests/form.html", _guest_form_context(wedding, form, True, guest))

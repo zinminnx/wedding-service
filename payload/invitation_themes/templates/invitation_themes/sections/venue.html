@@ -1,0 +1,8 @@
+<section class="section venue-card" id="venue">
+    <p class="script">The Venue</p>
+    <h2>Where we'll celebrate</h2>
+    <div class="venue-details">
+        <strong>{{ wedding.wedding_location|default:'Wedding venue' }}</strong>
+        <span>{% if wedding.wedding_location %}We look forward to welcoming you there.{% else %}Venue details will be shared by the couple.{% endif %}</span>
+    </div>
+</section>

@@ -1,7 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block title %}Gifts · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=9">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/gifts.css' %}?v=10.10.1.1">{% endblock %}
 
 {% block content %}
 <div class="page-head gift-page-head">
@@ -10,7 +10,10 @@
         <h1>Gifts & Return Gifts</h1>
         <p class="lead">Flexible payment methods, return-gift rules, and tracked inventory in one place.</p>
     </div>
-    <a class="btn btn-soft" href="{% url 'gifts:inventory' %}">Inventory & History</a>
+    <div class="gift-head-actions">
+        <a class="btn" href="{% url 'gifts:report' %}">Payment Reports</a>
+        <a class="btn btn-soft" href="{% url 'gifts:inventory' %}">Inventory & History</a>
+    </div>
 </div>
 
 <div class="gift-stats">
@@ -56,15 +59,15 @@
 
         <div class="soft-divider"></div>
         <div class="section-title-row method-title-row">
-            <div><p class="eyebrow">Flexible Payment Methods</p><h2>Your payment accounts</h2><p class="helper-copy compact">Add as many Mobile Pay or Bank methods as you need.</p></div>
+            <div><p class="eyebrow">Approved Payment Providers</p><h2>Your payment accounts</h2><p class="helper-copy compact">Choose a Bank or Mobile Pay provider prepared by Main Admin, then enter only your account details.</p></div>
         </div>
 
         <div class="method-list">
             {% for method in payment_methods %}
             <article class="method-card {% if not method.is_enabled %}is-disabled{% endif %}">
-                <div class="method-icon {% if method.method_type == 'BANK' %}bank{% else %}pay{% endif %}">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</div>
+                {% if method.provider_link.provider.logo %}<img class="provider-logo-thumb" src="{{ method.provider_link.provider.logo.url }}" alt="{{ method.provider_link.provider.name }} logo">{% else %}<div class="method-icon {% if method.method_type == 'BANK' %}bank{% else %}pay{% endif %}">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</div>{% endif %}
                 <div class="method-main">
-                    <div class="method-name-row"><strong>{{ method.name }}</strong><span class="method-type">{{ method.get_method_type_display }}</span>{% if not method.is_enabled %}<span class="method-off">Disabled</span>{% endif %}</div>
+                    <div class="method-name-row"><strong>{{ method.provider_link.provider.name }}</strong><span class="method-type">{{ method.get_method_type_display }}</span>{% if not method.is_enabled %}<span class="method-off">Disabled</span>{% endif %}</div>
                     <span>{{ method.account_name }}</span>
                     {% if method.method_type == 'PAY' %}<small>{% if method.phone_number %}{{ method.phone_number }}{% else %}QR only{% endif %}</small>{% else %}<small>Account No. {{ method.account_number }}</small>{% endif %}
                 </div>
@@ -90,15 +93,14 @@
             </div>
             {% if payment_form.non_field_errors %}<div class="form-errors">{{ payment_form.non_field_errors }}</div>{% endif %}
             <div class="payment-method-fields">
-                <label><span>Type</span>{{ payment_form.method_type }}<small>Pay = phone/QR, Bank = account number.</small></label>
-                <label><span>Name</span>{{ payment_form.name }}<small>Example: KBZPay, Wave Pay, AYA Bank.</small></label>
+                <label class="provider-select-field"><span>Bank / Payment Provider</span>{{ payment_form.provider }}{% if payment_form.provider.errors %}<small class="field-error">{{ payment_form.provider.errors|striptags }}</small>{% endif %}<small>Main Admin controls provider name, type and logo.</small></label>
                 <label><span>Account name</span>{{ payment_form.account_name }}</label>
                 <label class="pay-field"><span>Phone number</span>{{ payment_form.phone_number }}{% if payment_form.phone_number.errors %}<small class="field-error">{{ payment_form.phone_number.errors|striptags }}</small>{% endif %}</label>
                 <label class="bank-field"><span>Account number</span>{{ payment_form.account_number }}{% if payment_form.account_number.errors %}<small class="field-error">{{ payment_form.account_number.errors|striptags }}</small>{% endif %}</label>
                 <label class="pay-field"><span>QR image <small>(optional if phone is set)</small></span>{{ payment_form.qr_image }}{% if payment_form.qr_image.errors %}<small class="field-error">{{ payment_form.qr_image.errors|striptags }}</small>{% endif %}</label>
                 <label class="method-enabled">{{ payment_form.is_enabled }} <span>Enable this method</span></label>
             </div>
-            <div class="method-hint" data-method-hint>Mobile Pay needs an account name plus phone number or QR. Bank needs account name plus account number.</div>
+            <div class="method-hint" data-method-hint>Choose the approved provider first. Bank accounts require an account number; Mobile Pay requires a phone number or QR image.</div>
             <div class="form-actions"><button class="btn" type="submit">{% if edit_method %}Update Payment Method{% else %}Add Payment Method{% endif %}</button></div>
         </form>
     </section>

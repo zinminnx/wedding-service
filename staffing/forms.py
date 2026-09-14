@@ -8,6 +8,14 @@ from .models import WeddingStaffMembership
 User = get_user_model()
 
 
+def _filtered_role_choices(allowed_roles=None):
+    choices = list(WeddingStaffMembership.Role.choices)
+    if allowed_roles is None:
+        return choices
+    allowed = set(allowed_roles)
+    return [(value, label) for value, label in choices if value in allowed]
+
+
 class StaffCreateForm(forms.Form):
     username = forms.CharField(max_length=150)
     email = forms.EmailField(required=False)
@@ -23,6 +31,10 @@ class StaffCreateForm(forms.Form):
     )
 
     existing_user = None
+
+    def __init__(self, *args, allowed_roles=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = _filtered_role_choices(allowed_roles)
 
     def clean(self):
         cleaned = super().clean()
@@ -46,3 +58,7 @@ class StaffMembershipForm(forms.ModelForm):
     class Meta:
         model = WeddingStaffMembership
         fields = ["role", "status"]
+
+    def __init__(self, *args, allowed_roles=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = _filtered_role_choices(allowed_roles)

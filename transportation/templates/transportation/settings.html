@@ -1,0 +1,76 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Transportation · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'transportation/css/transportation.css' %}?v=11.0">{% endblock %}
+{% block content %}
+<div class="page-head transportation-page-head">
+  <div>
+    <p class="eyebrow">Guest Travel</p>
+    <h1>Transportation</h1>
+    <p class="lead">Control guest travel guidance for {{ wedding.name }} without duplicating venue data.</p>
+  </div>
+  <a class="btn btn-soft" href="{% url 'weddings:overview' %}?step=3">Edit Wedding Venue</a>
+</div>
+
+<div class="transport-admin-grid">
+  <form method="post" class="panel transport-settings-card">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="transport-section-head">
+      <div><p class="eyebrow">Invitation Section</p><h2>How to Get There</h2></div>
+      <label class="transport-switch">{{ form.guide_enabled }} <span>Enabled</span></label>
+    </div>
+
+    <div class="transport-destination-card">
+      <div class="transport-source-title"><span>Wedding venue · source of truth</span><a href="{% url 'weddings:overview' %}?step=3">Edit</a></div>
+      <h3>{{ destination.name|default:'Venue name not set' }}</h3>
+      {% if destination.address %}<p>{{ destination.address }}</p>{% endif %}
+      <div class="transport-meta">
+        {% if destination.latitude != None and destination.longitude != None %}<span>{{ destination.latitude }}, {{ destination.longitude }}</span>{% endif %}
+        {% if destination.landmark %}<span>Landmark: {{ destination.landmark }}</span>{% endif %}
+        {% if google_maps_url %}<span>Map destination ready</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="transport-field">
+      <label>Travel note</label>
+      {{ form.transport_note }}
+      <small>Optional parking, shuttle, taxi or arrival guidance shown on the invitation.</small>
+    </div>
+
+    <div class="transport-divider"></div>
+    <div class="transport-section-head compact">
+      <div><p class="eyebrow">Bus Guide</p><h2>Future route integration</h2></div>
+      <label class="transport-switch">{{ form.bus_guide_enabled }} <span>Show Find a Bus</span></label>
+    </div>
+    <div class="transport-field">
+      <label>Route provider</label>
+      {{ form.provider }}
+      <small>v11.0 creates the provider adapter boundary. It does not fabricate live routes.</small>
+    </div>
+    <div class="transport-field">
+      <label>Fallback message</label>
+      {{ form.fallback_message }}
+      <small>Shown when a provider is unavailable or the Bus Project API is not connected.</small>
+    </div>
+
+    <div class="transport-safety-note"><strong>Privacy:</strong> EverAfter does not request or store a guest's current location in this foundation release. Future origin lookup must require explicit guest permission.</div>
+    <div class="form-actions"><button class="btn" type="submit">Save Transportation Settings</button></div>
+  </form>
+
+  <aside class="panel transport-preview-card">
+    <p class="eyebrow">Guest Preview</p>
+    <h2>How to Get There</h2>
+    <div class="transport-preview-pin">⌖</div>
+    <strong>{{ destination.name|default:'Wedding Venue' }}</strong>
+    {% if destination.address %}<span>{{ destination.address }}</span>{% endif %}
+    {% if transport_settings.transport_note %}<p>{{ transport_settings.transport_note }}</p>{% endif %}
+    <div class="transport-preview-actions">
+      <span>Open in Maps</span>
+      {% if transport_settings.bus_guide_enabled %}<span>Find a Bus</span>{% endif %}
+    </div>
+    <small>Map routing uses Wedding Venue data from Step 3. Bus results remain unavailable until a provider is connected.</small>
+  </aside>
+</div>
+{% endblock %}

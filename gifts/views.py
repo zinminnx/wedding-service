@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from staffing.access import PERM_MANAGE_GIFTS, get_wedding_for_user
 
@@ -20,6 +21,7 @@ from .models import (
     ReturnGiftInventory,
     ReturnGiftMovement,
 )
+from .reporting import build_payment_report_context, payment_report_csv_response
 
 
 def _ensure_inventory(wedding, settings_obj=None):
@@ -76,7 +78,8 @@ def gift_dashboard(request):
                 item = payment_form.save(commit=False)
                 item.wedding = wedding
                 item.save()
-                messages.success(request, f"Payment method '{item.name}' saved.")
+                payment_form.save_provider_link(item)
+                messages.success(request, f"Payment account for '{item.name}' saved.")
                 return redirect("gifts:dashboard")
         else:
             form = GiftSettingsForm(instance=settings_obj)
@@ -129,6 +132,26 @@ def gift_dashboard(request):
             "recent_movements": recent_movements,
         },
     )
+
+
+@login_required
+def payment_report(request):
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_GIFTS)
+    if not wedding:
+        raise Http404("Wedding not found")
+    return render(
+        request,
+        "gifts/reports.html",
+        build_payment_report_context(request, wedding),
+    )
+
+
+@login_required
+def payment_report_csv(request):
+    wedding = get_wedding_for_user(request.user, PERM_MANAGE_GIFTS)
+    if not wedding:
+        raise Http404("Wedding not found")
+    return payment_report_csv_response(request, wedding)
 
 
 @login_required
@@ -267,18 +290,24 @@ def declaration_action(request, declaration_id):
 
     if action == "verify":
         declaration.payment_status = GuestGiftDeclaration.PaymentStatus.VERIFIED
-        declaration.save(update_fields=["payment_status", "updated_at"])
+        declaration.payment_reviewed_at = timezone.now()
+        declaration.payment_reviewed_by = request.user
+        declaration.save(update_fields=["payment_status", "payment_reviewed_at", "payment_reviewed_by", "updated_at"])
         messages.success(request, f"Gift from {declaration.guest.name} verified.")
     elif action == "reject":
         declaration.payment_status = GuestGiftDeclaration.PaymentStatus.REJECTED
-        declaration.save(update_fields=["payment_status", "updated_at"])
+        declaration.payment_reviewed_at = timezone.now()
+        declaration.payment_reviewed_by = request.user
+        declaration.save(update_fields=["payment_status", "payment_reviewed_at", "payment_reviewed_by", "updated_at"])
         messages.success(request, f"Gift declaration from {declaration.guest.name} rejected.")
     elif action == "reset":
         if declaration.gift_choice == GuestGiftDeclaration.GiftChoice.DIGITAL:
             declaration.payment_status = GuestGiftDeclaration.PaymentStatus.GUEST_SENT
         else:
             declaration.payment_status = GuestGiftDeclaration.PaymentStatus.NOT_REQUIRED
-        declaration.save(update_fields=["payment_status", "updated_at"])
+        declaration.payment_reviewed_at = None
+        declaration.payment_reviewed_by = None
+        declaration.save(update_fields=["payment_status", "payment_reviewed_at", "payment_reviewed_by", "updated_at"])
         messages.success(request, "Gift verification status reset.")
     else:
         return HttpResponseBadRequest("Unknown action")

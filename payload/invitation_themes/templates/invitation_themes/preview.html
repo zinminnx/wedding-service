@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ theme.name }} Preview · EverAfter</title>
+<link rel="stylesheet" href="{% static 'invitation_themes/css/public_themes.css' %}?v=10.6">
+<link rel="stylesheet" href="{% static 'invitation_themes/css/preview.css' %}?v=10.7">
+<link rel="stylesheet" href="{% static 'invitation_themes/css/section_builder_public.css' %}?v=10.7">
+</head>
+<body class="theme-preview-page">
+<div class="preview-toolbar"><div><strong>{{ theme.name }}</strong><span>{{ theme.get_category_display }} · v{{ theme.version }} · section preview</span></div><div><a href="?device=mobile" class="{% if device == 'mobile' %}active{% endif %}">Mobile</a><a href="?device=tablet" class="{% if device == 'tablet' %}active{% endif %}">Tablet</a><a href="?device=desktop" class="{% if device == 'desktop' %}active{% endif %}">Desktop</a><button type="button" onclick="window.close()">Close</button></div></div>
+<div class="device-stage device-{{ device }}">
+<div class="preview-device">
+<div class="ea-theme-canvas theme-{{ theme.key }} layout-{{ theme.layout_key }}" style="--theme-accent:{{ accent }};--theme-bg:{{ theme.config.background }};">
+<div class="invite-shell">
+{% for section in preview_sections %}
+    {% if section.key == 'hero' %}
+        <header class="invite-hero"><p class="overline">You're invited to the wedding of</p><h1>{{ wedding.groom_name|default:'Aung' }} <span>&</span> {{ wedding.bride_name|default:'May' }}</h1><p class="date-line">Saturday, 26 September 2026</p><div class="portrait-card"><div class="portrait-fallback"><span>A ♥ M</span></div></div><p class="hero-quote">{{ hero_message }}</p></header>
+    {% endif %}
+{% endfor %}
+<main class="invite-content">
+{% for section in preview_sections %}
+    {% if section.key != 'hero' %}
+    <section class="section preview-section-card preview-section-{{ section.key }}"><p class="script">{{ section.label }}</p><h2>{% if section.key == 'event' %}Dear {{ guest.name }}{% elif section.key == 'rsvp' %}Will you be joining us?{% elif section.key == 'gift' %}Your presence means the most{% elif section.key == 'venue' %}Wedding Venue{% elif section.key == 'maps' %}Open the venue in Maps{% elif section.key == 'photos' %}Share a Moment{% elif section.key == 'entry_pass' %}Your Entry Pass{% elif section.key == 'gallery' %}Capture the Moments{% elif section.key == 'story' %}Our Story{% elif section.key == 'schedule' %}Wedding Day{% else %}{{ section.label }}{% endif %}</h2><p>{{ section.description }}</p></section>
+    {% endif %}
+{% endfor %}
+</main>
+</div>
+</div>
+</div>
+</div>
+</body></html>

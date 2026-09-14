@@ -1,0 +1,26 @@
+{% load static %}
+{% if enabled %}
+<link rel="stylesheet" href="{% static 'transportation/css/transportation.css' %}?v=11.0">
+<section class="section ea-transport-card" id="transportation">
+    <p class="script">How to Get There</p>
+    <h2>Transportation Guide</h2>
+    {% if destination.name %}<p class="ea-transport-destination"><strong>{{ destination.name }}</strong>{% if destination.address %}<span>{{ destination.address }}</span>{% endif %}</p>{% endif %}
+    {% if transport_settings.transport_note %}<p class="ea-transport-note">{{ transport_settings.transport_note }}</p>{% endif %}
+
+    <div class="ea-transport-actions">
+        {% if google_maps_url %}<a class="ea-transport-action ea-smart-transport-map" href="{{ google_maps_url }}" data-google="{{ google_maps_url }}" data-apple="{{ apple_maps_url }}" target="_blank" rel="noopener">Open in Maps</a>{% endif %}
+        {% if bus_guide_url %}<a class="ea-transport-action secondary" href="{{ bus_guide_url }}">Find a Bus</a>{% endif %}
+    </div>
+    {% if transport_settings.bus_guide_enabled %}<small class="ea-transport-privacy">Location is never collected unless you explicitly choose to share it in a future route-search flow.</small>{% endif %}
+</section>
+<script>
+(function(){
+  document.querySelectorAll('.ea-smart-transport-map').forEach(function(link){
+    var ua = navigator.userAgent || '';
+    var apple = /iPhone|iPad|iPod|Macintosh/.test(ua);
+    var target = apple && link.dataset.apple ? link.dataset.apple : link.dataset.google;
+    if (target) link.setAttribute('href', target);
+  });
+})();
+</script>
+{% endif %}

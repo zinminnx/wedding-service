@@ -1,0 +1,86 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Wedding Modules · EverAfter{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'modules/css/module_registry.css' %}?v=10.4">
+{% endblock %}
+
+{% block content %}
+<div class="module-page">
+    <div class="module-hero">
+        <div>
+            <p class="module-eyebrow">Workspace Control</p>
+            <h1>Wedding Modules</h1>
+            <p>Turn optional features on or off for <strong>{{ wedding.name }}</strong>. Existing data is preserved when a module is disabled.</p>
+        </div>
+        <div class="module-package">
+            <span>Current package</span>
+            <strong>{{ package.name|default:"No package assigned" }}</strong>
+            <small>Package availability is controlled by Main Admin.</small>
+        </div>
+    </div>
+
+    <div class="module-rule-strip">
+        <span><b>1</b> System enabled</span>
+        <span><b>2</b> Package allowed</span>
+        <span><b>3</b> Wedding enabled</span>
+        <span><b>4</b> Role allowed</span>
+        <strong>All four must pass.</strong>
+    </div>
+
+    <div class="module-grid">
+        {% for card in module_cards %}
+        <article class="module-card {% if card.state.available %}is-on{% else %}is-off{% endif %}">
+            <div class="module-card-head">
+                <div>
+                    <div class="module-title-row">
+                        <h2>{{ card.feature.name }}</h2>
+                        {% if card.feature.is_core %}<span class="module-badge core">Core</span>{% else %}<span class="module-badge optional">Optional</span>{% endif %}
+                    </div>
+                    <p>{{ card.feature.description }}</p>
+                </div>
+                <span class="module-status {% if card.state.available %}on{% else %}off{% endif %}">{% if card.state.available %}Available{% else %}Unavailable{% endif %}</span>
+            </div>
+
+            <div class="module-checks">
+                <div><span>System</span><b>{% if card.state.system_allowed %}Enabled{% else %}Disabled{% endif %}</b></div>
+                <div><span>Package</span><b>{% if card.state.package_allowed %}Allowed{% else %}Blocked{% endif %}</b></div>
+                <div><span>Wedding</span><b>{% if card.state.wedding_enabled %}On{% else %}Off{% endif %}</b></div>
+                <div><span>Role</span><b>{% if card.state.role_allowed %}Allowed{% else %}Blocked{% endif %}</b></div>
+            </div>
+
+            {% if card.state.dependency_names %}
+            <p class="module-deps">Requires: {{ card.state.dependency_names|join:", " }}</p>
+            {% endif %}
+            {% if card.state.blocked_reason %}<p class="module-reason">{{ card.state.blocked_reason }}</p>{% endif %}
+
+            <div class="module-card-actions">
+                {% if card.feature.is_core %}
+                    <button class="module-button locked" type="button" disabled>Always enabled</button>
+                {% elif card.state.wedding_enabled %}
+                    <form method="post" action="{% url 'modules:toggle' card.feature.key %}">
+                        {% csrf_token %}<input type="hidden" name="enabled" value="0">
+                        <button class="module-button disable" type="submit" {% if card.dependents %}disabled title="Required by another enabled module"{% endif %}>Disable for this wedding</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'modules:toggle' card.feature.key %}">
+                        {% csrf_token %}<input type="hidden" name="enabled" value="1">
+                        <button class="module-button enable" type="submit" {% if not card.state.system_allowed or not card.state.package_allowed or not card.state.dependencies_ok %}disabled{% endif %}>Enable for this wedding</button>
+                    </form>
+                {% endif %}
+            </div>
+        </article>
+        {% empty %}
+        <div class="module-empty">No wedding-visible modules are registered yet.</div>
+        {% endfor %}
+    </div>
+
+    {% if request.user.is_superuser %}
+    <div class="module-admin-note">
+        <div><strong>Main Admin controls</strong><span>System availability, dependencies, package access and future modules are managed from Django Admin.</span></div>
+        <a href="/admin/modules/featuremodule/">Open Module Registry</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

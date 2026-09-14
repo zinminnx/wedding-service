@@ -1,0 +1,6 @@
+<section class="section maps-card" id="maps">
+    <p class="script">Directions</p>
+    <h2>Open the venue in Maps</h2>
+    <p>{{ wedding.wedding_location|default:'Wedding location' }}</p>
+    {% if wedding.google_maps_url %}<a class="map-action" href="{{ wedding.google_maps_url }}" target="_blank" rel="noopener noreferrer">Open Map</a>{% else %}<p class="future-section-note">A map link has not been added to this wedding yet.</p>{% endif %}
+</section>

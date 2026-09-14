@@ -4,10 +4,18 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("", include("financial_docs.urls")),
+    path("", include("vendors.urls")),
+    path("", include("planner.urls")),
+    path("", include("budgeting.urls")),
+    path("", include("transportation.urls")),
+    path("", include("event_tools.urls")),
     path("", include("photos.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("dashboard/", include("weddings.urls")),
+    path("dashboard/modules/", include("modules.urls")),
+    path("dashboard/design/", include("invitation_themes.urls")),
     path("dashboard/guests/", include("guests.urls")),
     path("dashboard/rsvp/", include("rsvp.urls")),
     path("dashboard/gifts/", include("gifts.urls")),

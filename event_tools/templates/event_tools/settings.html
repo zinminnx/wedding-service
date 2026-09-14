@@ -1,0 +1,58 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Calendar & Venue · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'event_tools/css/event_tools.css' %}?v=10.8.1">{% endblock %}
+{% block content %}
+<div class="page-head event-tools-head">
+  <div>
+    <p class="eyebrow">Invitation Tools</p>
+    <h1>Calendar & Venue</h1>
+    <p class="lead">Control guest-facing calendar and map behavior. Wedding venue data is edited once in Wedding Details.</p>
+  </div>
+</div>
+
+<form method="post" class="event-tools-grid">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel form-errors full">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel event-card">
+    <div class="event-card-head"><div><p class="eyebrow">Calendar</p><h2>Save the Date</h2></div><label class="switch-row">{{ form.calendar_enabled }} <span>Enabled</span></label></div>
+    <div class="field"><label>Calendar title</label>{{ form.calendar_title }}<small>Leave blank to use the couple/wedding name automatically.</small></div>
+    <div class="field"><label>Description</label>{{ form.calendar_description }}</div>
+    <div class="field"><label>Event duration (minutes)</label>{{ form.event_duration_minutes }}</div>
+    <div class="reminder-grid">
+      <div class="field"><label>Reminder 1</label>{{ form.reminder_1_minutes }}<small>10080 = 7 days.</small></div>
+      <div class="field"><label>Reminder 2</label>{{ form.reminder_2_minutes }}<small>1440 = 1 day.</small></div>
+      <div class="field"><label>Reminder 3</label>{{ form.reminder_3_minutes }}<small>180 = 3 hours.</small></div>
+    </div>
+  </section>
+
+  <section class="panel event-card">
+    <div class="event-card-head"><div><p class="eyebrow">Venue</p><h2>Invitation Display</h2></div><label class="switch-row">{{ form.venue_enabled }} <span>Show venue</span></label></div>
+
+    <div class="venue-source-card">
+      <div class="venue-source-head">
+        <div><small>Single source of truth</small><strong>{{ wedding.wedding_location|default:'Venue name not set' }}</strong></div>
+        <a class="venue-edit-link" href="{% url 'weddings:overview' %}?step=3">Edit Wedding Venue</a>
+      </div>
+      {% if wedding.venue_full_address %}<p>{{ wedding.venue_full_address }}</p>{% endif %}
+      <div class="venue-source-meta">
+        {% if wedding.venue_latitude != None and wedding.venue_longitude != None %}<span>{{ wedding.venue_latitude }}, {{ wedding.venue_longitude }}</span>{% endif %}
+        {% if wedding.venue_landmark %}<span>Landmark: {{ wedding.venue_landmark }}</span>{% endif %}
+        {% if wedding.google_maps_url %}<span>Google Maps link ready</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="venue-toggle-grid">
+      <label class="behavior-toggle">{{ form.smart_map_enabled }} <span><b>Open in Maps</b><small>Use Apple Maps on Apple devices and Google Maps elsewhere.</small></span></label>
+      <label class="behavior-toggle">{{ form.show_google_maps }} <span><b>Google Maps button</b><small>Show an explicit Google Maps option.</small></span></label>
+      <label class="behavior-toggle">{{ form.show_apple_maps }} <span><b>Apple Maps button</b><small>Show an explicit Apple Maps option.</small></span></label>
+      <label class="behavior-toggle">{{ form.show_address }} <span><b>Show full address</b><small>Display the address entered in Wedding Details.</small></span></label>
+      <label class="behavior-toggle">{{ form.show_landmark }} <span><b>Show landmark</b><small>Display the venue landmark when available.</small></span></label>
+      <label class="behavior-toggle">{{ form.show_location_note }} <span><b>Show location note</b><small>Display arrival or venue notes to guests.</small></span></label>
+    </div>
+  </section>
+
+  <div class="event-save full"><button class="btn" type="submit">Save Invitation Settings</button></div>
+</form>
+{% endblock %}

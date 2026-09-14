@@ -1,0 +1,45 @@
+{% load static invitation_theme_tags %}
+{% invitation_live_design wedding as invite_design %}
+{% invitation_live_sections wedding as invitation_sections %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ wedding.name }}</title>
+    <link rel="stylesheet" href="{% static 'invitations/css/invitation.css' %}?v=6.2">
+    <link rel="stylesheet" href="{% static 'invitation_themes/css/public_themes.css' %}?v=10.6">
+    <link rel="stylesheet" href="{% static 'invitation_themes/css/section_builder_public.css' %}?v=10.7">
+</head>
+<body class="ea-theme-canvas theme-{{ invite_design.theme.key }} layout-{{ invite_design.theme.layout_key }}" style="--theme-accent: {{ invite_design.accent }};" data-theme-version="{{ invite_design.theme.version }}">
+<div class="invite-shell">
+    {% if invitation_sections.hero %}
+        {% include invitation_sections.hero.template %}
+    {% endif %}
+
+    <main class="invite-content" data-invitation-section-stream>
+        {% for section in invitation_sections.content %}
+            {% include section.template %}
+        {% endfor %}
+    </main>
+
+    <footer class="invite-footer"><span>Beautiful moments · lasting memories</span></footer>
+</div>
+<script src="{% static 'invitations/js/invitation.js' %}"></script>
+<script>
+(function(){
+    const methodInput = document.querySelector('[data-payment-method-id]');
+    document.querySelectorAll('[data-digital-choice]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+            if (radio.checked && methodInput) methodInput.value = radio.dataset.methodId || '';
+        });
+    });
+    document.querySelectorAll('input[name="gift_choice"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+            if (radio.checked && radio.value !== 'DIGITAL' && methodInput) methodInput.value = '';
+        });
+    });
+})();
+</script>
+</body>
+</html>

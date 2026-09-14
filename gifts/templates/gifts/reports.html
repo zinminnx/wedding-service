@@ -1,0 +1,93 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Payment Reports · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'gifts/css/reports.css' %}?v=10.10.1">{% endblock %}
+
+{% block content %}
+<div class="page-head report-page-head">
+    <div>
+        <p class="eyebrow">Payments & Gifts</p>
+        <h1>Payment Reports</h1>
+        <p class="lead">Read provider totals, verification status and guest declarations for {{ wedding.name }}.</p>
+    </div>
+    <div class="report-head-actions">
+        <a class="btn btn-soft" href="{% url 'gifts:dashboard' %}">Back to Gifts</a>
+        <a class="btn" href="{% url 'gifts:report_csv' %}?{{ request.GET.urlencode }}">Export CSV</a>
+    </div>
+</div>
+
+<form method="get" class="panel report-filter-card">
+    <div class="report-filter-grid">
+        <label><span>From</span><input type="date" name="date_from" value="{{ filters.date_from }}"></label>
+        <label><span>To</span><input type="date" name="date_to" value="{{ filters.date_to }}"></label>
+        <label><span>Gift choice</span><select name="gift_choice"><option value="">All choices</option>{% for value,label in gift_choice_choices %}<option value="{{ value }}" {% if filters.gift_choice == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>Payment status</span><select name="status"><option value="">All statuses</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>Provider type</span><select name="provider_type"><option value="">Bank + Mobile Pay</option>{% for value,label in provider_type_choices %}<option value="{{ value }}" {% if filters.provider_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>Provider</span><select name="provider"><option value="">All providers</option>{% for provider in providers %}<option value="{{ provider.id }}" {% if filters.provider == provider.id|stringformat:'s' %}selected{% endif %}>{{ provider.name }}{% if provider.status == 'DISABLED' %} · disabled{% endif %}</option>{% endfor %}</select></label>
+        <label class="report-search"><span>Guest / reference</span><input type="search" name="q" value="{{ filters.q }}" placeholder="Name, phone, guest ID or reference"></label>
+    </div>
+    <div class="report-filter-actions"><a class="btn btn-soft" href="{% url 'gifts:report' %}">Clear</a><button class="btn" type="submit">Apply Filters</button></div>
+</form>
+
+<div class="report-kpis">
+    <article><span>Declarations</span><strong>{{ stats.total }}</strong><small>{{ stats.digital }} digital · {{ stats.physical }} physical · {{ stats.none }} no gift</small></article>
+    <article><span>Declared digital</span><strong>{{ stats.declared_amount|floatformat:2 }}</strong><small>Amount entered by guests</small></article>
+    <article class="report-kpi-pending"><span>Pending</span><strong>{{ stats.pending_amount|floatformat:2 }}</strong><small>{{ stats.pending }} awaiting verification</small></article>
+    <article class="report-kpi-good"><span>Verified</span><strong>{{ stats.verified_amount|floatformat:2 }}</strong><small>{{ stats.verified }} confirmed payment(s)</small></article>
+    <article class="report-kpi-rejected"><span>Rejected</span><strong>{{ stats.rejected_amount|floatformat:2 }}</strong><small>{{ stats.rejected }} rejected declaration(s)</small></article>
+</div>
+
+<div class="report-two-col">
+    <section class="panel report-provider-panel">
+        <div class="panel-head"><div><p class="eyebrow">Provider Breakdown</p><h2>Bank & Payment Provider Summary</h2></div></div>
+        <div class="table-scroll">
+            <table class="report-table">
+                <thead><tr><th>Provider</th><th>Type</th><th>Declarations</th><th>Declared</th><th>Pending</th><th>Verified</th><th>Rejected</th></tr></thead>
+                <tbody>
+                {% for item in provider_summary %}
+                    <tr><td><strong>{{ item.provider_name }}</strong></td><td>{{ item.provider_type }}</td><td>{{ item.declarations }}</td><td>{{ item.declared_amount|floatformat:2 }}</td><td>{{ item.pending }}</td><td>{{ item.verified }}</td><td>{{ item.rejected }}</td></tr>
+                {% empty %}<tr><td colspan="7" class="report-empty">No digital payment declarations match these filters.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <aside class="panel report-status-panel">
+        <p class="eyebrow">Verification</p><h2>Digital Payment Status</h2>
+        <div class="status-bar-list">
+            {% for item in status_bars %}
+            <div class="status-bar-item"><div><span>{{ item.label }}</span><strong>{{ item.count }} · {{ item.percent }}%</strong></div><div class="status-track"><i style="width:{{ item.percent }}%"></i></div></div>
+            {% endfor %}
+        </div>
+        <p class="report-note">Amounts are based on guest-declared values. A declaration is only confirmed after an authorized user marks it Verified.</p>
+    </aside>
+</div>
+
+<section class="panel report-detail-panel">
+    <div class="panel-head report-detail-head">
+        <div><p class="eyebrow">Detail</p><h2>Matching Declarations</h2></div>
+        <span class="soft-pill">{{ row_count }} result{{ row_count|pluralize }}</span>
+    </div>
+    {% if row_count > row_limit %}<div class="report-limit-note">Showing the newest {{ row_limit }} rows on screen. CSV export includes every matching row.</div>{% endif %}
+    <div class="table-scroll">
+        <table class="report-table report-detail-table">
+            <thead><tr><th>Guest</th><th>Choice</th><th>Provider</th><th>Amount</th><th>Status</th><th>Reference</th><th>Reviewed</th></tr></thead>
+            <tbody>
+            {% for item in rows %}
+            <tr>
+                <td><strong>{{ item.guest.name }}</strong><small>{{ item.guest.public_id }} · {{ item.declared_at|date:'d M Y · g:i A' }}</small></td>
+                <td>{{ item.get_gift_choice_display }}</td>
+                <td>
+                    {% if item.report_provider %}<div class="report-provider-cell">{% if item.report_provider.logo %}<img src="{{ item.report_provider.logo.url }}" alt="">{% endif %}<div><strong>{{ item.report_provider.name }}</strong><small>{{ item.report_provider.get_provider_type_display }}</small></div></div>{% else %}{{ item.payment_method_label }}{% endif %}
+                </td>
+                <td>{% if item.amount != None %}{{ item.amount|floatformat:2 }}{% else %}—{% endif %}</td>
+                <td><span class="report-status status-{{ item.payment_status|lower }}">{{ item.get_payment_status_display }}</span></td>
+                <td>{{ item.payment_reference|default:'—' }}</td>
+                <td>{% if item.payment_reviewed_at %}{{ item.payment_reviewed_at|date:'d M Y · g:i A' }}{% if item.payment_reviewed_by %}<small>{{ item.payment_reviewed_by.get_full_name|default:item.payment_reviewed_by.username }}</small>{% endif %}{% else %}—{% endif %}</td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="report-empty">No declarations match these filters.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

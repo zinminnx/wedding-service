@@ -5,6 +5,7 @@ from django.db import models
 class WeddingStaffMembership(models.Model):
     class Role(models.TextChoices):
         WEDDING_MANAGER = "WEDDING_MANAGER", "Wedding Manager"
+        WEDDING_PLANNER = "WEDDING_PLANNER", "Wedding Planner"
         RECEPTION_STAFF = "RECEPTION_STAFF", "Reception Staff"
         PHOTO_STAFF = "PHOTO_STAFF", "Photo Staff"
         PRINT_STAFF = "PRINT_STAFF", "Print Staff"
@@ -44,13 +45,23 @@ class WeddingStaffMembership(models.Model):
                 name="unique_wedding_staff_membership",
             )
         ]
+        # Keep the original migration index names stable. Without explicit names,
+        # newer Django may propose rename-only migrations even though the schema
+        # semantics are unchanged.
         indexes = [
-            models.Index(fields=["wedding", "status"]),
-            models.Index(fields=["user", "status"]),
+            models.Index(
+                fields=["wedding", "status"],
+                name="staffing_we_wedding_32e9d8_idx",
+            ),
+            models.Index(
+                fields=["user", "status"],
+                name="staffing_we_user_id_f0a219_idx",
+            ),
         ]
 
     def __str__(self):
         return f"{self.wedding} - {self.user} ({self.get_role_display()})"
+
 
 class WeddingWorkspacePreference(models.Model):
     user = models.OneToOneField(
@@ -69,4 +80,3 @@ class WeddingWorkspacePreference(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.active_wedding or 'No wedding selected'}"
-

@@ -149,23 +149,52 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="venue-card">
+                <div class="venue-card" id="venue-master-data">
                     <div class="venue-card-head">
-                        <div><span class="venue-pin">⌖</span><div><strong>Wedding venue</strong><p>Tell guests where the ceremony or reception will take place.</p></div></div>
+                        <div><span class="venue-pin">⌖</span><div><strong>Wedding venue</strong><p>This is the single source of truth used by invitations, calendar, maps and future transportation features.</p></div></div>
                     </div>
                     <div class="premium-form-grid two-col venue-fields">
                         <div class="field-wrap">
-                            <label for="{{ form.wedding_location.id_for_label }}">Wedding Location</label>
+                            <label for="{{ form.wedding_location.id_for_label }}">Venue Name</label>
                             {{ form.wedding_location }}
-                            <small>Venue name and area, e.g. Novotel Yangon Max, Yangon.</small>
+                            <small>Example: Novotel Yangon Max.</small>
                             {{ form.wedding_location.errors }}
                         </div>
                         <div class="field-wrap">
-                            <label for="{{ form.google_maps_url.id_for_label }}">Google Maps Location</label>
+                            <label for="{{ form.google_maps_url.id_for_label }}">Google Maps URL</label>
                             {{ form.google_maps_url }}
-                            <small>Google Maps → Share → Copy link, then paste it here.</small>
+                            <small>Google Maps → Share → Copy link.</small>
                             {{ form.google_maps_url.errors }}
+                        </div>
+                        <div class="field-wrap venue-full-span">
+                            <label for="{{ form.venue_full_address.id_for_label }}">Full Address</label>
+                            {{ form.venue_full_address }}
+                            <small>Street, township/city and any address details guests may need.</small>
+                            {{ form.venue_full_address.errors }}
+                        </div>
+                        <div class="field-wrap">
+                            <label for="{{ form.venue_latitude.id_for_label }}">Latitude</label>
+                            {{ form.venue_latitude }}
+                            <small>Optional; use together with longitude for precise map routing.</small>
+                            {{ form.venue_latitude.errors }}
+                        </div>
+                        <div class="field-wrap">
+                            <label for="{{ form.venue_longitude.id_for_label }}">Longitude</label>
+                            {{ form.venue_longitude }}
+                            <small>Optional; use together with latitude.</small>
+                            {{ form.venue_longitude.errors }}
+                        </div>
+                        <div class="field-wrap">
+                            <label for="{{ form.venue_landmark.id_for_label }}">Landmark</label>
+                            {{ form.venue_landmark }}
+                            <small>Optional nearby landmark.</small>
+                            {{ form.venue_landmark.errors }}
+                        </div>
+                        <div class="field-wrap">
+                            <label for="{{ form.venue_location_note.id_for_label }}">Location Note</label>
+                            {{ form.venue_location_note }}
+                            <small>Entrance, parking, floor or arrival instructions.</small>
+                            {{ form.venue_location_note.errors }}
                         </div>
                     </div>
                     <div class="venue-map-preview" id="venue-map-preview"{% if not wedding.google_maps_url %} hidden{% endif %}>

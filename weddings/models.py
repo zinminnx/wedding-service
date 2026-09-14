@@ -71,7 +71,14 @@ class Wedding(models.Model):
         default="Asia/Yangon",
     )
 
+    # Venue master data. wedding_location is retained as the canonical venue name
+    # for backwards compatibility with earlier EverAfter releases.
     wedding_location = models.CharField(max_length=255, blank=True)
+    venue_full_address = models.CharField(max_length=500, blank=True)
+    venue_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    venue_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    venue_landmark = models.CharField(max_length=255, blank=True)
+    venue_location_note = models.TextField(blank=True)
 
     google_maps_url = models.URLField(max_length=1000, blank=True)
 

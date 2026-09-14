@@ -1,0 +1,8 @@
+<section class="section schedule-card" id="schedule">
+    <p class="script">Wedding Day</p>
+    <h2>Celebration Schedule</h2>
+    <div class="schedule-list">
+        <div class="schedule-row"><span>{% if wedding.wedding_date %}{{ wedding.wedding_date|date:'g:i A' }}{% else %}Time TBA{% endif %}</span><strong>Guest arrival & welcome</strong></div>
+        <div class="schedule-row"><span>Following</span><strong>Wedding celebration</strong></div>
+    </div>
+</section>

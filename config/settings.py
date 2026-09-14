@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -37,13 +37,22 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 # --------------------------------------------------
 
 INSTALLED_APPS = [
+    "modules",
+    "invitation_themes",
     "photos",
     "staffing",
     "accounts",
     "weddings",
     "guests",
     "invitations",
+    "event_tools",
+    "transportation",
+    "budgeting",
+    "planner",
+    "vendors",
+    "financial_docs",
     "rsvp",
+    "payment_providers",
     "gifts",
     "checkins",
     "django.contrib.admin",
@@ -65,6 +74,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "modules.middleware.ModuleGateMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

@@ -10,3 +10,20 @@
 .inventory-summary-grid{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:14px;margin-bottom:18px}.inventory-hero,.inventory-mini{padding:20px}.inventory-hero>strong{display:block;font:500 48px Georgia,serif;margin:15px 0 3px}.inventory-hero>span,.inventory-mini span,.inventory-mini small{color:var(--muted);font-size:11px}.inventory-mini{display:flex;flex-direction:column;justify-content:center}.inventory-mini strong{font:500 30px Georgia,serif;margin:7px 0}.inventory-control-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.inventory-form-card{padding:24px}.inventory-form-card h2{font:500 24px Georgia,serif;margin:2px 0}.inventory-form{display:grid;gap:12px;margin-top:18px}.inventory-form label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700}.inventory-form input{width:100%;border:1px solid #dfe3e7;border-radius:9px;padding:11px;background:#fff;font:inherit}.inventory-form .btn{justify-self:start}.correction-card{background:#fcfaf6}.inventory-history-panel{padding:0;overflow:hidden}.inventory-history-panel .panel-head{padding:22px 22px 8px}.movement-delta{display:inline-flex;min-width:48px;justify-content:center;border-radius:999px;padding:5px 8px;background:#f4f1ec;font-size:11px;font-weight:900}.movement-delta.plus{background:#e5f4eb}.movement-delta.minus{background:#fae9e6}.movement-table td{vertical-align:top}
 @media(max-width:1000px){.inventory-summary-grid{grid-template-columns:repeat(2,1fr)}.return-grid-v9{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.inventory-summary-grid,.inventory-control-grid,.return-grid-v9{grid-template-columns:1fr}.inventory-page-head{align-items:flex-start}.inventory-hero>strong{font-size:42px}}
+
+
+/* v10.9 payment provider master */
+.provider-logo-thumb{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid var(--line);padding:6px;flex:none}.provider-select-field{grid-column:1/-1}.provider-select-field select{width:100%}.method-name-row strong{display:inline-flex;align-items:center;gap:6px}
+
+
+/* v10.10 payment reporting */
+.gift-head-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}@media(max-width:650px){.gift-head-actions{width:100%}.gift-head-actions .btn{flex:1;text-align:center}}
+
+
+/* v10.10.1 gifts header layout hotfix */
+.gift-page-head{align-items:flex-start;flex-wrap:wrap}
+.gift-page-head>div:first-child{min-width:0;flex:1 1 430px}
+.gift-head-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:0 1 auto;flex-wrap:wrap;max-width:100%}
+.gift-head-actions .btn{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1.2;min-height:42px}
+@media(max-width:1200px){.gift-head-actions{width:100%;justify-content:flex-start}.gift-head-actions .btn{flex:0 0 auto}}
+@media(max-width:650px){.gift-head-actions{display:grid;grid-template-columns:1fr;width:100%}.gift-head-actions .btn{width:100%;white-space:normal;text-align:center}}

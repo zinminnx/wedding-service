@@ -138,3 +138,7 @@ button.workspace-choice:hover { background:#f6f0e6; }
   .wedding-card-actions { align-items:stretch; flex-direction:column; }
   .wedding-card-actions form,.wedding-card-actions .btn { width:100%; }
 }
+
+
+/* v10.8.1 venue master data */
+.venue-fields .venue-full-span{grid-column:1/-1}.venue-fields textarea{width:100%;box-sizing:border-box;resize:vertical}@media(max-width:700px){.venue-fields .venue-full-span{grid-column:auto}}

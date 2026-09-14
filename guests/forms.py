@@ -1,7 +1,21 @@
+import re
+
 from django import forms
 from django.db.models import Sum
 
 from .models import Guest, GuestGroup
+
+
+def _normalize_phone(value):
+    return "".join(re.findall(r"\d+", value or ""))
+
+
+def _normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def _normalize_name(value):
+    return " ".join((value or "").strip().lower().split())
 
 
 class GuestForm(forms.ModelForm):
@@ -38,6 +52,8 @@ class GuestForm(forms.ModelForm):
 
     def __init__(self, *args, wedding=None, **kwargs):
         self.wedding = wedding
+        self.duplicate_warnings = []
+        self.duplicate_matches = []
         super().__init__(*args, **kwargs)
 
         if wedding:
@@ -81,7 +97,85 @@ class GuestForm(forms.ModelForm):
                     f"Currently allocated: {used}.",
                 )
 
+        self._build_duplicate_warnings(cleaned)
         return cleaned
+
+    def _build_duplicate_warnings(self, cleaned):
+        name = _normalize_name(cleaned.get("name"))
+        phone = _normalize_phone(cleaned.get("phone"))
+        email = _normalize_email(cleaned.get("email"))
+        selected_group = cleaned.get("group")
+        new_group_name = (cleaned.get("new_group") or "").strip()
+
+        intended_group_id = selected_group.id if selected_group else None
+        intended_group_name = selected_group.name if selected_group else "No group"
+        if new_group_name:
+            existing_group = GuestGroup.objects.filter(
+                wedding=self.wedding,
+                name__iexact=new_group_name,
+            ).first()
+            intended_group_id = existing_group.id if existing_group else None
+            intended_group_name = new_group_name
+
+        candidates = Guest.objects.filter(wedding=self.wedding).select_related("group")
+        if self.instance and self.instance.pk:
+            candidates = candidates.exclude(pk=self.instance.pk)
+
+        phone_matches = []
+        email_matches = []
+        identity_matches = []
+        group_identity_matches = []
+
+        for candidate in candidates:
+            candidate_name = _normalize_name(candidate.name)
+            candidate_phone = _normalize_phone(candidate.phone)
+            candidate_email = _normalize_email(candidate.email)
+
+            same_phone = bool(phone and candidate_phone and phone == candidate_phone)
+            same_email = bool(email and candidate_email and email == candidate_email)
+            same_identity = bool(name and phone and candidate_name == name and same_phone)
+            same_group_identity = bool(
+                same_identity
+                and intended_group_id is not None
+                and candidate.group_id == intended_group_id
+            )
+
+            if same_phone:
+                phone_matches.append(candidate)
+            if same_email:
+                email_matches.append(candidate)
+            if same_identity:
+                identity_matches.append(candidate)
+            if same_group_identity:
+                group_identity_matches.append(candidate)
+
+        def names(items):
+            return ", ".join(item.name for item in items[:4]) + ("…" if len(items) > 4 else "")
+
+        warnings = []
+        if group_identity_matches:
+            warnings.append(
+                f"Possible duplicate guest: same name, phone and group ({intended_group_name}) already exists: {names(group_identity_matches)}."
+            )
+        elif identity_matches:
+            warnings.append(
+                f"Strong duplicate warning: the same name and phone already exists: {names(identity_matches)}."
+            )
+
+        if phone_matches:
+            warnings.append(f"This phone number is already used by: {names(phone_matches)}.")
+        if email_matches:
+            warnings.append(f"This email address is already used by: {names(email_matches)}.")
+
+        # Keep warnings informational: duplicates are allowed after explicit confirmation.
+        self.duplicate_warnings = warnings
+        seen = set()
+        matches = []
+        for item in group_identity_matches + identity_matches + phone_matches + email_matches:
+            if item.pk not in seen:
+                seen.add(item.pk)
+                matches.append(item)
+        self.duplicate_matches = matches[:6]
 
     def save(self, commit=True):
         guest = super().save(commit=False)

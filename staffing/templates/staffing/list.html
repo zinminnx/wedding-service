@@ -1,7 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block title %}Staff & Access · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=7">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=10.5">{% endblock %}
 {% block content %}
 <div class="page-head staff-page-head">
     <div>
@@ -11,6 +11,13 @@
     </div>
     <a class="btn" href="{% url 'staffing:add' %}">+ Add Staff</a>
 </div>
+
+{% if not actor_is_owner %}
+<div class="panel" style="padding:14px 18px;margin-bottom:16px;border-left:4px solid #c59a53;">
+    <strong>Wedding Manager access</strong>
+    <p style="margin:5px 0 0;color:var(--muted);font-size:12px;">You can manage reception, photo, print and viewer accounts. Wedding Manager roles are owner-controlled.</p>
+</div>
+{% endif %}
 
 <div class="staff-stats">
     <div class="staff-stat"><span>Active staff</span><strong>{{ counts.active }}</strong></div>
@@ -48,19 +55,23 @@
                     <td><span class="role-chip role-{{ item.role|lower }}">{{ item.get_role_display }}</span></td>
                     <td><span class="badge {% if item.status == 'ACTIVE' %}success{% else %}neutral{% endif %}">{{ item.get_status_display }}</span></td>
                     <td class="access-summary">
-                        {% if item.role == 'WEDDING_MANAGER' %}Wedding, guests, invitations, RSVP, gifts, check-in, staff
+                        {% if item.role == 'WEDDING_MANAGER' %}Wedding operations, guests, invitations, RSVP, gifts, check-in, operational staff
                         {% elif item.role == 'RECEPTION_STAFF' %}Dashboard, RSVP, reception check-in
                         {% elif item.role == 'PHOTO_STAFF' %}Dashboard, photos
                         {% elif item.role == 'PRINT_STAFF' %}Dashboard, printing
                         {% else %}Dashboard, guests, invitations, RSVP{% endif %}
                     </td>
                     <td>
+                        {% if item.can_be_managed %}
                         <div class="staff-actions">
                             <a href="{% url 'staffing:edit' item.id %}">Edit</a>
                             {% if item.status == 'ACTIVE' and item.user_id != request.user.id %}
                             <form method="post" action="{% url 'staffing:disable' item.id %}" onsubmit="return confirm('Deactivate this staff access?');">{% csrf_token %}<button type="submit">Disable</button></form>
                             {% endif %}
                         </div>
+                        {% else %}
+                        <span class="soft-pill">Owner controlled</span>
+                        {% endif %}
                     </td>
                 </tr>
             {% empty %}
@@ -72,10 +83,10 @@
 </div>
 
 <div class="role-guide-grid">
-    <article><b>Wedding Manager</b><span>Can manage most wedding operations and staff.</span></article>
+    <article><b>Wedding Manager</b><span>Runs day-to-day operations. Owner-only actions stay protected.</span></article>
     <article><b>Reception Staff</b><span>RSVP visibility and entrance check-in only.</span></article>
-    <article><b>Photo Staff</b><span>Reserved for the upcoming photo workflow.</span></article>
-    <article><b>Print Staff</b><span>Reserved for the upcoming print workflow.</span></article>
+    <article><b>Photo Staff</b><span>Photo moderation and slideshow workflow.</span></article>
+    <article><b>Print Staff</b><span>Reserved for the print workflow.</span></article>
     <article><b>Viewer</b><span>Read-only access to guests, invitations and RSVP.</span></article>
 </div>
 {% endblock %}

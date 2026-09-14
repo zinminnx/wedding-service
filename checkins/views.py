@@ -14,9 +14,14 @@ from django.utils import timezone
 
 from gifts.models import GiftSettings, ReturnGiftInventory, ReturnGiftMovement
 from invitations.models import Invitation
-from staffing.access import PERM_CHECK_IN, get_wedding_for_user
+from staffing.access import (
+    PERM_CHECK_IN,
+    PERM_OVERRIDE_CHECKIN,
+    get_wedding_for_user,
+    has_wedding_permission,
+)
 
-from .models import CheckIn
+from .models import CheckIn, CheckInEvent
 
 
 def _owned_invitation(user, qr_token):
@@ -68,7 +73,7 @@ def _ensure_inventory(wedding, gift_settings):
     return inventory
 
 
-def _eligible_quantity(gift_settings, checkin):
+def _eligible_total(gift_settings, checkin):
     if gift_settings.return_gift_mode == GiftSettings.ReturnGiftMode.NONE:
         return 0
     if gift_settings.return_gift_mode == GiftSettings.ReturnGiftMode.PER_ATTENDEE:
@@ -76,6 +81,18 @@ def _eligible_quantity(gift_settings, checkin):
     if gift_settings.return_gift_mode == GiftSettings.ReturnGiftMode.CUSTOM:
         return gift_settings.custom_return_gift_quantity
     return 1
+
+
+def _remaining_return_gift_eligibility(gift_settings, checkin):
+    return max(_eligible_total(gift_settings, checkin) - checkin.return_gift_quantity, 0)
+
+
+def _positive_int(value, default=0):
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        return default
+    return result if result > 0 else default
 
 
 def qr_image(request, qr_token):
@@ -123,12 +140,8 @@ def dashboard(request):
                 }
             )
 
-        checked_in_people = (
-            CheckIn.objects.filter(wedding=wedding).aggregate(total=Sum("checked_in_count"))["total"] or 0
-        )
-        issued = (
-            CheckIn.objects.filter(wedding=wedding).aggregate(total=Sum("return_gift_quantity"))["total"] or 0
-        )
+        checked_in_people = CheckIn.objects.filter(wedding=wedding).aggregate(total=Sum("checked_in_count"))["total"] or 0
+        issued = CheckIn.objects.filter(wedding=wedding).aggregate(total=Sum("return_gift_quantity"))["total"] or 0
         gift_settings, _ = GiftSettings.objects.get_or_create(wedding=wedding)
         inventory = _ensure_inventory(wedding, gift_settings)
         counts = {
@@ -200,13 +213,14 @@ def camera_scanner(request):
 def scan(request, qr_token):
     invitation = _owned_invitation(request.user, qr_token)
     guest = invitation.guest
+    wedding = invitation.wedding
 
     if invitation.status in [Invitation.Status.REVOKED, Invitation.Status.EXPIRED]:
         return render(
             request,
             "checkins/scan.html",
             {
-                "wedding": invitation.wedding,
+                "wedding": wedding,
                 "invitation": invitation,
                 "guest": guest,
                 "blocked": True,
@@ -214,38 +228,114 @@ def scan(request, qr_token):
         )
 
     checkin, _ = CheckIn.objects.get_or_create(
-        wedding=invitation.wedding,
+        wedding=wedding,
         guest=guest,
         invitation=invitation,
     )
-    gift_settings, _ = GiftSettings.objects.get_or_create(wedding=invitation.wedding)
-    inventory = _ensure_inventory(invitation.wedding, gift_settings)
-    eligible_return_gift_qty = _eligible_quantity(gift_settings, checkin)
+    gift_settings, _ = GiftSettings.objects.get_or_create(wedding=wedding)
+    inventory = _ensure_inventory(wedding, gift_settings)
+    can_override_checkin = has_wedding_permission(request.user, wedding, PERM_OVERRIDE_CHECKIN)
 
     if request.method == "POST":
         action = request.POST.get("action", "").strip()
 
         if action == "check_in":
-            try:
-                count = int(request.POST.get("checked_in_count", 0) or 0)
-            except ValueError:
-                count = 0
-            if count < 1 or count > guest.allowed_party_size:
-                messages.error(request, f"Check-in count must be between 1 and {guest.allowed_party_size}.")
+            arriving_count = _positive_int(request.POST.get("checked_in_count"))
+            if arriving_count < 1:
+                messages.error(request, "Enter how many people are arriving now.")
+                return redirect("checkins:scan", qr_token=qr_token)
+
+            wants_override = request.POST.get("override_limit") == "1"
+            override_reason = (request.POST.get("override_reason") or "").strip()
+
+            with transaction.atomic():
+                locked = CheckIn.objects.select_for_update().select_related("guest").get(pk=checkin.pk)
+                new_total = locked.checked_in_count + arriving_count
+                exceeds_limit = new_total > guest.allowed_party_size
+
+                if exceeds_limit and not can_override_checkin:
+                    messages.error(
+                        request,
+                        f"This would exceed the party limit of {guest.allowed_party_size}. Ask the Wedding Manager or Owner for an override.",
+                    )
+                    return redirect("checkins:scan", qr_token=qr_token)
+                if exceeds_limit and not wants_override:
+                    messages.error(request, "Use the authorized override form when exceeding the party limit.")
+                    return redirect("checkins:scan", qr_token=qr_token)
+                if exceeds_limit and not override_reason:
+                    messages.error(request, "An override reason is required when exceeding the party limit.")
+                    return redirect("checkins:scan", qr_token=qr_token)
+
+                first_arrival = locked.checked_in_count == 0
+                locked.checked_in_count = new_total
+                if first_arrival:
+                    locked.checked_in_at = timezone.now()
+                locked.checked_in_by = request.user
+
+                event_action = CheckInEvent.Action.ARRIVAL
+                event_reason = ""
+                if exceeds_limit:
+                    locked.limit_overridden = True
+                    locked.override_reason = override_reason
+                    locked.override_by = request.user
+                    locked.override_at = timezone.now()
+                    event_action = CheckInEvent.Action.OVERRIDE
+                    event_reason = override_reason
+
+                locked.save()
+                CheckInEvent.objects.create(
+                    wedding=wedding,
+                    checkin=locked,
+                    guest=guest,
+                    action=event_action,
+                    quantity_delta=arriving_count,
+                    resulting_count=new_total,
+                    reason=event_reason,
+                    created_by=request.user,
+                )
+
+            if exceeds_limit:
+                messages.success(request, f"Authorized override recorded. +{arriving_count} arrived ({new_total}/{guest.allowed_party_size}).")
             else:
-                checkin.checked_in_count = count
-                checkin.checked_in_at = timezone.now()
-                checkin.checked_in_by = request.user
-                checkin.save()
-                messages.success(request, f"{guest.name} checked in ({count}).")
+                messages.success(request, f"{guest.name}: +{arriving_count} arrived ({new_total}/{guest.allowed_party_size}).")
             return redirect("checkins:scan", qr_token=qr_token)
 
         if action == "undo_check_in":
-            checkin.checked_in_count = 0
-            checkin.checked_in_at = None
-            checkin.checked_in_by = None
-            checkin.save()
-            messages.success(request, f"Check-in for {guest.name} was undone.")
+            undo_count = _positive_int(request.POST.get("undo_count"))
+            if undo_count < 1:
+                messages.error(request, "Enter how many arrivals to undo.")
+                return redirect("checkins:scan", qr_token=qr_token)
+
+            with transaction.atomic():
+                locked = CheckIn.objects.select_for_update().select_related("guest").get(pk=checkin.pk)
+                if locked.checked_in_count < 1:
+                    messages.info(request, "No check-in quantity to undo.")
+                    return redirect("checkins:scan", qr_token=qr_token)
+
+                actual_undo = min(undo_count, locked.checked_in_count)
+                new_total = locked.checked_in_count - actual_undo
+                locked.checked_in_count = new_total
+                if new_total == 0:
+                    locked.checked_in_at = None
+                    locked.checked_in_by = None
+                if new_total <= guest.allowed_party_size:
+                    locked.limit_overridden = False
+                    locked.override_reason = ""
+                    locked.override_by = None
+                    locked.override_at = None
+                locked.save()
+                CheckInEvent.objects.create(
+                    wedding=wedding,
+                    checkin=locked,
+                    guest=guest,
+                    action=CheckInEvent.Action.UNDO,
+                    quantity_delta=-actual_undo,
+                    resulting_count=new_total,
+                    reason=(request.POST.get("undo_reason") or "").strip(),
+                    created_by=request.user,
+                )
+
+            messages.success(request, f"Undid {actual_undo} arrival(s). Current check-in: {new_total}/{guest.allowed_party_size}.")
             return redirect("checkins:scan", qr_token=qr_token)
 
         if action == "issue_return_gift":
@@ -253,53 +343,44 @@ def scan(request, qr_token):
                 messages.error(request, "Check the guest in before issuing the return gift.")
                 return redirect("checkins:scan", qr_token=qr_token)
 
-            default_quantity = _eligible_quantity(gift_settings, checkin)
-            quantity = default_quantity
-            if gift_settings.return_gift_allow_staff_override:
-                raw_quantity = request.POST.get("return_gift_quantity", "").strip()
-                if raw_quantity:
-                    try:
-                        quantity = int(raw_quantity)
-                    except ValueError:
-                        quantity = 0
-
-            if quantity < 1:
-                messages.info(request, "No return gift is eligible under the current rule.")
-                return redirect("checkins:scan", qr_token=qr_token)
-            if quantity > 1000:
-                messages.error(request, "Return gift quantity is too large.")
-                return redirect("checkins:scan", qr_token=qr_token)
-
             with transaction.atomic():
                 locked_checkin = CheckIn.objects.select_for_update().get(pk=checkin.pk)
                 locked_inventory = ReturnGiftInventory.objects.select_for_update().get(pk=inventory.pk)
+                remaining_eligible = _remaining_return_gift_eligibility(gift_settings, locked_checkin)
 
-                if locked_checkin.return_gift_quantity > 0:
-                    messages.info(request, "Return gift has already been issued for this invitation.")
+                quantity = remaining_eligible
+                if gift_settings.return_gift_allow_staff_override:
+                    raw_quantity = request.POST.get("return_gift_quantity", "").strip()
+                    if raw_quantity:
+                        quantity = _positive_int(raw_quantity)
+
+                if quantity < 1:
+                    messages.info(request, "No additional return gift is eligible under the current rule.")
+                elif quantity > 1000:
+                    messages.error(request, "Return gift quantity is too large.")
+                elif not gift_settings.return_gift_allow_staff_override and quantity > remaining_eligible:
+                    messages.error(request, f"Only {remaining_eligible} additional gift(s) are currently eligible.")
                 elif quantity > locked_inventory.quantity_on_hand:
-                    messages.error(
-                        request,
-                        f"Not enough return gift stock. Remaining: {locked_inventory.quantity_on_hand}.",
-                    )
+                    messages.error(request, f"Not enough return gift stock. Remaining: {locked_inventory.quantity_on_hand}.")
                 else:
                     locked_inventory.quantity_on_hand -= quantity
                     locked_inventory.save(update_fields=["quantity_on_hand", "updated_at"])
-                    locked_checkin.return_gift_quantity = quantity
+                    locked_checkin.return_gift_quantity += quantity
                     locked_checkin.return_gift_issued_at = timezone.now()
                     locked_checkin.return_gift_issued_by = request.user
                     locked_checkin.save()
                     ReturnGiftMovement.objects.create(
-                        wedding=invitation.wedding,
+                        wedding=wedding,
                         inventory=locked_inventory,
                         guest=guest,
                         checkin=locked_checkin,
                         movement_type=ReturnGiftMovement.MovementType.ISSUE,
                         quantity_delta=-quantity,
                         quantity_after=locked_inventory.quantity_on_hand,
-                        note=f"Issued at reception for {guest.name}.",
+                        note=f"Issued at reception for {guest.name}. Cumulative issued: {locked_checkin.return_gift_quantity}.",
                         created_by=request.user,
                     )
-                    messages.success(request, f"Return gift issued: {quantity}.")
+                    messages.success(request, f"Return gift issued: +{quantity}. Total issued: {locked_checkin.return_gift_quantity}.")
             return redirect("checkins:scan", qr_token=qr_token)
 
         if action == "undo_return_gift":
@@ -317,7 +398,7 @@ def scan(request, qr_token):
                     locked_checkin.return_gift_issued_by = None
                     locked_checkin.save()
                     ReturnGiftMovement.objects.create(
-                        wedding=invitation.wedding,
+                        wedding=wedding,
                         inventory=locked_inventory,
                         guest=guest,
                         checkin=locked_checkin,
@@ -332,16 +413,22 @@ def scan(request, qr_token):
 
         return HttpResponseBadRequest("Unknown action")
 
+    checkin.refresh_from_db()
     try:
         rsvp = guest.rsvp
     except Exception:
         rsvp = None
 
+    remaining_capacity = max(guest.allowed_party_size - checkin.checked_in_count, 0)
+    eligible_return_gift_qty = _remaining_return_gift_eligibility(gift_settings, checkin)
+    gift_eligibility_excess = max(checkin.return_gift_quantity - _eligible_total(gift_settings, checkin), 0)
+    checkin_events = list(checkin.events.select_related("created_by").all()[:8])
+
     return render(
         request,
         "checkins/scan.html",
         {
-            "wedding": invitation.wedding,
+            "wedding": wedding,
             "invitation": invitation,
             "guest": guest,
             "checkin": checkin,
@@ -349,6 +436,10 @@ def scan(request, qr_token):
             "remaining_stock": inventory.quantity_on_hand,
             "stock_is_low": inventory.is_low_stock,
             "eligible_return_gift_qty": eligible_return_gift_qty,
+            "gift_eligibility_excess": gift_eligibility_excess,
+            "remaining_capacity": remaining_capacity,
+            "can_override_checkin": can_override_checkin,
+            "checkin_events": checkin_events,
             "rsvp": rsvp,
             "blocked": False,
         },

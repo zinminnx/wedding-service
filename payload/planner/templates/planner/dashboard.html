@@ -1,0 +1,60 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Wedding Planner · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'planner/css/planner.css' %}?v=11.2">{% endblock %}
+{% block content %}
+<div class="page-head planner-page-head">
+    <div><p class="eyebrow">Wedding Operations</p><h1>Wedding Planner</h1><p class="lead">Tasks, checklist, appointments, reminders and the wedding-day run sheet for {{ wedding.name }}.</p></div>
+    <div class="planner-head-actions"><a class="btn btn-soft" href="{% url 'planner:appointment_add' %}">+ Appointment</a><a class="btn" href="{% url 'planner:task_add' %}">+ Task</a></div>
+</div>
+
+<div class="planner-stats">
+    <article><span>Open tasks</span><strong>{{ task_open }}</strong><small>{{ task_total }} total</small></article>
+    <article class="{% if task_overdue %}warn{% endif %}"><span>Overdue</span><strong>{{ task_overdue }}</strong><small>Needs attention</small></article>
+    <article><span>Completed</span><strong>{{ task_completed }}</strong><small>Finished items</small></article>
+    <article><span>Upcoming meetings</span><strong>{{ appointments|length }}</strong><small>Next scheduled items</small></article>
+</div>
+
+<div class="planner-grid">
+    <section class="panel planner-main-card">
+        <div class="planner-section-head"><div><p class="eyebrow">Tasks & Checklist</p><h2>Next actions</h2></div><a href="{% url 'planner:task_add' %}" class="text-link">Add task →</a></div>
+        <div class="planner-task-list">
+            {% for item in upcoming_tasks %}
+            <article class="planner-task {% if item.is_overdue %}is-overdue{% endif %}">
+                <div class="task-check">
+                    <form method="post" action="{% url 'planner:task_action' item.id %}">{% csrf_token %}<button title="Mark done" name="action" value="done">✓</button></form>
+                </div>
+                <div class="task-copy"><div class="task-title-row"><strong>{{ item.title }}</strong><span class="priority priority-{{ item.priority|lower }}">{{ item.get_priority_display }}</span></div><small>{{ item.get_kind_display }}{% if item.due_at %} · Due {{ item.due_at|date:'d M · g:i A' }}{% endif %}{% if item.assigned_to %} · {{ item.assigned_to.get_full_name|default:item.assigned_to.username }}{% endif %}</small></div>
+                <a class="task-edit" href="{% url 'planner:task_edit' item.id %}">Edit</a>
+            </article>
+            {% empty %}<div class="planner-empty"><strong>No dated tasks yet.</strong><span>Create tasks, checklist items or milestones to build the planning timeline.</span></div>{% endfor %}
+        </div>
+    </section>
+
+    <aside class="panel planner-side-card">
+        <div class="planner-section-head"><div><p class="eyebrow">Reminders</p><h2>Coming up</h2></div></div>
+        <div class="reminder-list">{% for item in reminders %}<div><time>{{ item.at|date:'d M · g:i A' }}</time><span>{{ item.type }}</span><strong>{{ item.title }}</strong></div>{% empty %}<p class="muted">No reminders scheduled.</p>{% endfor %}</div>
+    </aside>
+</div>
+
+<div class="planner-grid lower-grid">
+    <section class="panel planner-main-card">
+        <div class="planner-section-head"><div><p class="eyebrow">Wedding Day</p><h2>Run Sheet</h2></div><a href="{% url 'planner:run_sheet_add' %}" class="text-link">+ Add item</a></div>
+        <div class="run-sheet-list">
+            {% for item in run_sheet %}
+            <article class="run-sheet-row"><time>{{ item.scheduled_at|date:'d M' }}<b>{{ item.scheduled_at|date:'g:i A' }}</b></time><div><strong>{{ item.title }}</strong><small>{% if item.location %}{{ item.location }}{% endif %}{% if item.owner_label %} · {{ item.owner_label }}{% endif %}</small></div><span class="run-status status-{{ item.status|lower }}">{{ item.get_status_display }}</span><a href="{% url 'planner:run_sheet_edit' item.id %}">Edit</a></article>
+            {% empty %}<div class="planner-empty"><strong>Run sheet is empty.</strong><span>Add wedding-day timing, handoffs and responsible teams.</span></div>{% endfor %}
+        </div>
+    </section>
+
+    <aside class="panel planner-side-card">
+        <div class="planner-section-head"><div><p class="eyebrow">Appointments</p><h2>Meetings</h2></div><a href="{% url 'planner:appointment_add' %}" class="text-link">+ Add</a></div>
+        <div class="appointment-list">{% for item in appointments %}<article><time>{{ item.starts_at|date:'d M · g:i A' }}</time><strong>{{ item.title }}</strong><span>{{ item.location|default:'Location not set' }}</span><a href="{% url 'planner:appointment_edit' item.id %}">Edit</a></article>{% empty %}<p class="muted">No upcoming appointments.</p>{% endfor %}</div>
+    </aside>
+</div>
+
+<section class="panel notes-panel">
+    <div class="planner-section-head"><div><p class="eyebrow">Planning Notes</p><h2>Notes & decisions</h2></div><a class="btn btn-soft" href="{% url 'planner:note_add' %}">+ Note</a></div>
+    <div class="note-grid">{% for item in notes %}<article class="planner-note {% if item.is_pinned %}is-pinned{% endif %}"><span>{% if item.is_pinned %}Pinned{% else %}Note{% endif %}</span><h3>{{ item.title }}</h3><p>{{ item.body|truncatechars:220 }}</p><footer><small>{{ item.updated_at|date:'d M Y · g:i A' }}</small><a href="{% url 'planner:note_edit' item.id %}">Edit</a></footer></article>{% empty %}<div class="planner-empty"><strong>No planning notes yet.</strong><span>Capture decisions and coordination notes here.</span></div>{% endfor %}</div>
+</section>
+{% endblock %}

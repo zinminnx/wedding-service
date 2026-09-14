@@ -1,0 +1,10 @@
+<section class="section intro-card" id="event-details">
+    <p class="script">Our Wedding</p>
+    <h2>Dear {{ guest.name }}</h2>
+    <p>We would be delighted to celebrate this beautiful day with you.</p>
+    <div class="mini-grid">
+        <div><span>Date</span><strong>{{ wedding.wedding_date|date:'d M Y'|default:'To be announced' }}</strong></div>
+        <div><span>Time</span><strong>{{ wedding.wedding_date|date:'g:i A'|default:'—' }}</strong></div>
+        <div><span>Party</span><strong>Up to {{ guest.allowed_party_size }}</strong></div>
+    </div>
+</section>

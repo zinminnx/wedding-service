@@ -1,0 +1,107 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Wedding Budget · EverAfter{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'budgeting/css/budgeting.css' %}?v=11.3">
+<link rel="stylesheet" href="{% static 'budgeting/css/privacy.css' %}?v=11.4">
+{% endblock %}
+
+{% block content %}
+<div class="page-head budget-page-head">
+    <div>
+        <p class="eyebrow">Financial Planning</p>
+        <h1>{% if summary.is_planner_view %}Shared Financial View{% else %}Wedding Financial Summary{% endif %}</h1>
+        <p class="lead">{% if summary.is_planner_view %}You can see approved Planner costs and Couple expenses explicitly shared with the Planner. Private Couple expenses remain hidden.{% else %}Keep Couple expenses separate from Planner estimates while consolidating only Owner-approved Planner costs into the totals.{% endif %}</p>
+    </div>
+    <div class="budget-head-actions">
+        <a class="btn btn-soft" href="{% url 'financial_docs:dashboard' %}">Financial Documents</a>
+        {% if access.planner and 'vendors' in enabled_modules %}<a class="btn btn-soft" href="{% url 'vendors:dashboard' %}">Vendors & Quotes</a>{% endif %}
+        {% if can_manage_couple_budget %}<a class="btn" href="{% url 'budgeting:item_create' %}">+ Add Couple Expense</a>{% endif %}
+    </div>
+</div>
+
+<div class="budget-rule-strip privacy-rule-strip">
+    <strong>{% if summary.is_planner_view %}Privacy enforced server-side{% else %}Couple Budget privacy{% endif %}</strong>
+    <span>{% if summary.is_planner_view %}Owner-private items are excluded from this table, category view and summary totals.{% else %}Each Couple expense can be Private or Shared with Planner. Approved Planner Budget items are always shared.{% endif %}</span>
+</div>
+
+{% if summary.is_planner_view %}
+<div class="budget-summary-grid planner-summary-grid">
+    <article class="budget-summary primary"><span>Visible Estimated</span><strong>{{ settings_obj.currency }} {{ summary.estimated|floatformat:2 }}</strong><small>Shared Couple + approved Planner items</small></article>
+    <article class="budget-summary"><span>Visible Committed</span><strong>{{ settings_obj.currency }} {{ summary.committed|floatformat:2 }}</strong><small>Approved / agreed visible costs</small></article>
+    <article class="budget-summary"><span>Visible Paid</span><strong>{{ settings_obj.currency }} {{ summary.paid|floatformat:2 }}</strong><small>Recorded payments on visible items</small></article>
+    <article class="budget-summary"><span>Visible Outstanding</span><strong>{{ settings_obj.currency }} {{ summary.outstanding|floatformat:2 }}</strong><small>Unpaid visible committed/final costs</small></article>
+</div>
+{% else %}
+<div class="budget-summary-grid">
+    <article class="budget-summary primary"><span>Total Budget</span><strong>{{ settings_obj.currency }} {{ summary.total_budget|floatformat:2 }}</strong><small>Your target spending ceiling</small></article>
+    <article class="budget-summary"><span>Estimated</span><strong>{{ settings_obj.currency }} {{ summary.estimated|floatformat:2 }}</strong><small>Couple + approved Planner estimates</small></article>
+    <article class="budget-summary"><span>Committed</span><strong>{{ settings_obj.currency }} {{ summary.committed|floatformat:2 }}</strong><small>Agreed / Owner-approved costs</small></article>
+    <article class="budget-summary"><span>Paid</span><strong>{{ settings_obj.currency }} {{ summary.paid|floatformat:2 }}</strong><small>Money recorded as paid so far</small></article>
+</div>
+<div class="budget-summary-grid second-row">
+    <article class="budget-summary"><span>Expected Cost</span><strong>{{ settings_obj.currency }} {{ summary.expected|floatformat:2 }}</strong><small>Actual → committed → estimate priority</small></article>
+    <article class="budget-summary {% if summary.is_over_budget %}danger{% else %}success{% endif %}"><span>Remaining Budget</span><strong>{{ settings_obj.currency }} {{ summary.remaining|floatformat:2 }}</strong><small>{% if summary.is_over_budget %}Currently over the target{% else %}Available against expected cost{% endif %}</small></article>
+    <article class="budget-summary"><span>Outstanding Payment</span><strong>{{ settings_obj.currency }} {{ summary.outstanding|floatformat:2 }}</strong><small>Committed/final cost still unpaid</small></article>
+    <article class="budget-summary"><span>Final Actual</span><strong>{{ settings_obj.currency }} {{ summary.final_actual|floatformat:2 }}</strong><small>Finalized expenses only</small></article>
+</div>
+{% endif %}
+
+<div class="budget-layout {% if summary.is_planner_view %}planner-budget-layout{% endif %}">
+    <section class="panel budget-main-card">
+        <div class="section-title-row">
+            <div><p class="eyebrow">Couple Budget</p><h2>{% if summary.is_planner_view %}Shared Couple Costs{% else %}Personal Wedding Costs{% endif %}</h2></div>
+            <span class="soft-pill">{{ items|length }} visible item{{ items|length|pluralize }}</span>
+        </div>
+        <div class="budget-table-wrap">
+            <table class="budget-table privacy-budget-table">
+                <thead><tr><th>Item</th><th>Privacy</th><th>Category</th><th>Status</th><th>Estimate</th><th>Committed</th><th>Paid</th><th>Expected</th><th>Outstanding</th>{% if can_manage_couple_budget %}<th></th>{% endif %}</tr></thead>
+                <tbody>
+                {% for item in items %}
+                    <tr class="{% if item.status == 'CANCELLED' %}cancelled-row{% endif %}">
+                        <td><strong>{{ item.title }}</strong>{% if item.notes %}<small>{{ item.notes|truncatechars:55 }}</small>{% endif %}</td>
+                        <td><span class="privacy-pill privacy-{{ item.visibility|lower }}">{{ item.get_visibility_display }}</span></td>
+                        <td>{{ item.category.name }}</td>
+                        <td><span class="budget-status status-{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+                        <td>{{ item.estimated_amount|floatformat:2 }}</td>
+                        <td>{{ item.committed_amount|floatformat:2 }}</td>
+                        <td>{{ item.paid_amount|floatformat:2 }}</td>
+                        <td><strong>{{ item.expected_amount|floatformat:2 }}</strong></td>
+                        <td>{{ item.outstanding_amount|floatformat:2 }}</td>
+                        {% if can_manage_couple_budget %}<td><div class="budget-row-actions"><a href="{% url 'budgeting:item_edit' item.id %}">Edit</a><form method="post" action="{% url 'budgeting:item_delete' item.id %}" onsubmit="return confirm('Remove this budget item?');">{% csrf_token %}<button type="submit">Delete</button></form></div></td>{% endif %}
+                    </tr>
+                {% empty %}<tr><td colspan="10" class="budget-empty"><strong>{% if summary.is_planner_view %}No Couple expenses are shared with Planner yet.{% else %}No Couple Budget items yet.{% endif %}</strong><span>{% if summary.is_planner_view %}Private owner expenses intentionally do not appear here.{% else %}Add personal expenses and choose whether each item is private or shared.{% endif %}</span>{% if can_manage_couple_budget %}<a class="btn" href="{% url 'budgeting:item_create' %}">+ Add first item</a>{% endif %}</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="budget-section-divider"></div>
+        <div class="section-title-row">
+            <div><p class="eyebrow">Planner Budget</p><h2>Owner-Approved Planner Costs</h2><p class="helper-copy compact">Read-only here. Decisions are managed from Vendors & Quotes.</p></div>
+            <span class="soft-pill">{{ summary.planner_items|length }} approved</span>
+        </div>
+        <div class="budget-table-wrap planner-cost-table">
+            <table class="budget-table">
+                <thead><tr><th>Item</th><th>Category</th><th>Committed</th><th>Paid</th><th>Expected</th><th>Outstanding</th><th>Source</th></tr></thead>
+                <tbody>
+                {% for item in summary.planner_items %}
+                    <tr>
+                        <td><strong>{{ item.title }}</strong>{% if item.notes %}<small>{{ item.notes|truncatechars:65 }}</small>{% endif %}</td>
+                        <td>{{ item.category.name }}</td><td>{{ item.committed_amount|floatformat:2 }}</td><td>{{ item.paid_amount|floatformat:2 }}</td><td><strong>{{ item.expected_amount|floatformat:2 }}</strong></td><td>{{ item.outstanding_amount|floatformat:2 }}</td><td><span class="privacy-pill privacy-shared">Shared Planner Cost</span></td>
+                    </tr>
+                {% empty %}<tr><td colspan="7" class="budget-empty"><strong>No approved Planner costs yet.</strong><span>Draft and proposed quotes are intentionally excluded from financial totals.</span>{% if access.planner and 'vendors' in enabled_modules %}<a class="btn btn-soft" href="{% url 'vendors:dashboard' %}">Open Vendors & Quotes</a>{% endif %}</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if can_manage_couple_budget %}
+    <aside class="budget-side-stack">
+        <section class="panel budget-target-card"><p class="eyebrow">Budget Target</p><h2>Set the ceiling</h2><form method="post" class="budget-settings-form">{% csrf_token %}<input type="hidden" name="form_type" value="settings"><label><span>Total wedding budget</span>{{ settings_form.total_budget }}{% for error in settings_form.total_budget.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</label><label><span>Currency</span>{{ settings_form.currency }}{% for error in settings_form.currency.errors %}<small class="field-error">{{ error }}</small>{% endfor %}</label><button class="btn" type="submit">Save Budget Target</button></form></section>
+        <section class="panel budget-category-card"><p class="eyebrow">Consolidated Category View</p><h2>Where the money goes</h2><div class="category-summary-list">{% for row in category_summary|slice:':8' %}<div><span>{{ row.name }}</span><strong>{{ settings_obj.currency }} {{ row.expected|floatformat:2 }}</strong><small>Paid {{ row.paid|floatformat:2 }}</small></div>{% empty %}<p class="muted">Category totals will appear after expenses are added or Planner quotes are approved.</p>{% endfor %}</div></section>
+    </aside>
+    {% endif %}
+</div>
+
+<div class="budget-formula-note"><b>Privacy rule:</b> Owner-private Couple expenses are never returned to Wedding Planner views. Planner summaries are calculated only from explicitly shared Couple expenses plus approved Planner Budget items.</div>
+{% endblock %}

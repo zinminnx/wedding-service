@@ -1,0 +1,18 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}{{ page_title }} · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'planner/css/planner.css' %}?v=11.2">{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">Wedding Planner</p><h1>{% if editing %}Edit{% else %}New{% endif %} {{ page_title }}</h1><p class="lead">Keep planning work scoped to {{ wedding.name }}.</p></div><a class="btn btn-soft" href="{% url 'planner:dashboard' %}">Back to Planner</a></div>
+<section class="panel planner-form-card">
+    <form method="post" class="planner-form">{% csrf_token %}
+        {% if form.non_field_errors %}<div class="planner-form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="planner-form-grid">
+        {% for field in form %}
+            <label class="{% if field.name == 'description' or field.name == 'notes' or field.name == 'body' %}wide{% endif %}"><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}</label>
+        {% endfor %}
+        </div>
+        <div class="planner-form-actions"><a class="btn btn-soft" href="{% url 'planner:dashboard' %}">Cancel</a><button class="btn" type="submit">Save {{ page_title }}</button></div>
+    </form>
+</section>
+{% endblock %}

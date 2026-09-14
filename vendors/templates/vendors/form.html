@@ -1,0 +1,36 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}{% if kind == 'quote' %}Vendor Quote{% else %}Vendor{% endif %} · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'vendors/css/vendors.css' %}?v=11.3">{% endblock %}
+
+{% block content %}
+<div class="page-head vendor-form-head">
+    <div>
+        <p class="eyebrow">Wedding Planner</p>
+        <h1>{% if kind == 'quote' %}{% if editing %}Edit Vendor Quote{% else %}New Vendor Quote{% endif %}{% else %}{% if editing %}Edit Vendor{% else %}Add Vendor{% endif %}{% endif %}</h1>
+        <p class="lead">{% if kind == 'quote' %}Quotes stay out of committed budget totals until the Wedding Owner approves them.{% else %}Keep vendor contact and service information organized per wedding workspace.{% endif %}</p>
+    </div>
+    <a class="btn btn-soft" href="{% url 'vendors:dashboard' %}">Back to Vendors</a>
+</div>
+
+<section class="panel vendor-form-panel">
+    <form method="post" class="vendor-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="vendor-form-grid">
+            {% for field in form %}
+            <label class="{% if field.name == 'notes' or field.name == 'address' %}wide{% endif %}">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </label>
+            {% endfor %}
+        </div>
+        {% if kind == 'quote' %}
+        <div class="quote-form-note"><b>Decision group:</b> give alternatives the same group name, such as "Photographer". When the Owner approves one proposed option, other proposed options in that group are automatically rejected.</div>
+        {% endif %}
+        <div class="form-actions"><button class="btn" type="submit">{% if editing %}Save Changes{% else %}Save Draft{% endif %}</button></div>
+    </form>
+</section>
+{% endblock %}

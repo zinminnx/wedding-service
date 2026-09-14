@@ -1,0 +1,6 @@
+<section class="section calendar-card" id="calendar">
+    <p class="script">Save the Date</p>
+    <h2>Keep this day on your calendar</h2>
+    <p>{% if wedding.wedding_date %}{{ wedding.wedding_date|date:'l, d F Y · g:i A' }}{% else %}The final date will be shared soon.{% endif %}</p>
+    <p class="future-section-note">Calendar actions are controlled by the EverAfter Calendar integration.</p>
+</section>

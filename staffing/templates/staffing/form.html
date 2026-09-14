@@ -1,7 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block title %}{% if editing %}Edit Staff{% else %}Add Staff{% endif %} · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=7">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'staffing/css/staff.css' %}?v=10.5">{% endblock %}
 {% block content %}
 <div class="page-head">
     <div>
@@ -35,7 +35,7 @@
                     <label><span>First name</span>{{ form.first_name }}</label>
                     <label><span>Last name</span>{{ form.last_name }}</label>
                     <label><span>Phone</span>{{ form.phone }}</label>
-                    <label><span>Wedding role</span>{{ form.role }}</label>
+                    <label><span>Wedding role</span>{{ form.role }}{% if form.role.errors %}<small class="field-error">{{ form.role.errors|striptags }}</small>{% endif %}</label>
                 </div>
                 <label><span>Password</span>{{ form.password }}{% if form.password.errors %}<small class="field-error">{{ form.password.errors|striptags }}</small>{% endif %}<small>If username/email already belongs to an existing account, leave password blank. New accounts require at least 8 characters.</small></label>
             {% endif %}
@@ -47,8 +47,12 @@
     <aside class="panel access-note-card">
         <p class="eyebrow">Access Rule</p>
         <h2>Least privilege by default</h2>
-        <p>Reception staff cannot edit wedding details, gifts or guest records. Viewer accounts cannot make changes. Staff access is scoped only to this wedding.</p>
-        <div class="security-points"><span>Wedding-scoped membership</span><span>Role-based navigation</span><span>Server-side permission checks</span><span>Owner access stays permanent</span></div>
+        {% if actor_is_owner %}
+        <p>As owner, you can assign Wedding Managers and operational staff. Ownership, archive, delete, package and module-control actions remain owner-only.</p>
+        {% else %}
+        <p>Wedding Managers can manage operational staff, but cannot create, edit, promote or disable Wedding Manager accounts.</p>
+        {% endif %}
+        <div class="security-points"><span>Wedding-scoped membership</span><span>Server-side permission checks</span><span>No manager privilege escalation</span><span>Owner-only dangerous actions</span></div>
     </aside>
 </div>
 {% endblock %}

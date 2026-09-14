@@ -252,5 +252,7 @@
     });
 
     updatePreview();
-    setStep(stepContainingErrors() || 1);
+    const requestedStep = Number(new URLSearchParams(window.location.search).get('step'));
+    const initialStep = stepContainingErrors() || ([1, 2, 3, 4].includes(requestedStep) ? requestedStep : 1);
+    setStep(initialStep);
 })();

@@ -1,0 +1,40 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'event_tools/css/event_tools.css' %}?v=10.8.1">
+{% if event_settings.calendar_enabled and wedding.wedding_date %}
+<section class="section ea-event-section" id="calendar">
+  <p class="script">Save the Date</p>
+  <h2>Add our wedding to your calendar</h2>
+  <p class="ea-event-copy">Keep the date close. Imported reminders are handled by your calendar app.</p>
+  <div class="ea-action-grid">
+    {% if google_calendar_url %}<a class="ea-event-action" href="{{ google_calendar_url }}" target="_blank" rel="noopener">Google Calendar</a>{% endif %}
+    <a class="ea-event-action" href="{% url 'event_tools:calendar_ics' invitation.token %}">Apple / Huawei / ICS</a>
+  </div>
+</section>
+{% endif %}
+
+{% if event_settings.venue_enabled %}
+  {% if wedding.wedding_location or wedding.venue_full_address %}
+  <section class="section ea-event-section" id="venue">
+    <p class="script">Venue</p>
+    <h2>{{ wedding.wedding_location|default:'Wedding Venue' }}</h2>
+    {% if event_settings.show_address and wedding.venue_full_address %}<p class="ea-venue-address">{{ wedding.venue_full_address }}</p>{% endif %}
+    {% if event_settings.show_landmark and wedding.venue_landmark %}<p class="ea-venue-meta"><strong>Landmark:</strong> {{ wedding.venue_landmark }}</p>{% endif %}
+    {% if event_settings.show_location_note and wedding.venue_location_note %}<p class="ea-venue-meta">{{ wedding.venue_location_note }}</p>{% endif %}
+    <div class="ea-action-grid">
+      {% if event_settings.smart_map_enabled and google_maps_url %}<a class="ea-event-action ea-smart-map" href="{{ google_maps_url }}" data-google="{{ google_maps_url }}" data-apple="{{ apple_maps_url }}" target="_blank" rel="noopener">Open in Maps</a>{% endif %}
+      {% if event_settings.show_google_maps and google_maps_url %}<a class="ea-event-action secondary" href="{{ google_maps_url }}" target="_blank" rel="noopener">Google Maps</a>{% endif %}
+      {% if event_settings.show_apple_maps and apple_maps_url %}<a class="ea-event-action secondary" href="{{ apple_maps_url }}" target="_blank" rel="noopener">Apple Maps</a>{% endif %}
+    </div>
+  </section>
+  <script>
+  (function(){
+    document.querySelectorAll('.ea-smart-map').forEach(function(link){
+      var ua = navigator.userAgent || '';
+      var apple = /iPhone|iPad|iPod|Macintosh/.test(ua);
+      var target = apple && link.dataset.apple ? link.dataset.apple : link.dataset.google;
+      if (target) link.setAttribute('href', target);
+    });
+  })();
+  </script>
+  {% endif %}
+{% endif %}

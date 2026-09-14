@@ -1,0 +1,8 @@
+<section class="section pass-card" id="entry-pass">
+    <p class="script">Your Entry Pass</p>
+    <h2>Keep this ready at reception</h2>
+    <div class="entry-qr-card"><img class="entry-qr" src="{% url 'checkins:qr_image' invitation.qr_token %}" alt="Entrance QR"></div>
+    <strong>{{ guest.name }}</strong>
+    <span class="status-pill">Invitation active</span>
+    <p class="module-note">Show this QR at the reception counter. It contains a secure token, not your personal details.</p>
+</section>

@@ -1,0 +1,24 @@
+<section class="section" id="rsvp">
+    <p class="script">Kindly Respond</p>
+    <h2>Will you be joining us?</h2>
+    {% if rsvp_saved %}<div class="success-banner">✓ Thank you. Your RSVP has been saved.</div>{% endif %}
+    {% if rsvp_error %}<div class="error-banner">{{ rsvp_error }}</div>{% endif %}
+    <form method="post" class="rsvp-form" data-rsvp-form data-party-limit="{{ guest.allowed_party_size }}">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="rsvp">
+        <input type="hidden" name="response" value="{{ rsvp.response|default:'' }}" data-rsvp-value>
+        <div class="choice-stack" data-choice-group>
+            <button type="button" class="choice {% if rsvp.response == 'ATTENDING' %}active{% endif %}" data-choice data-value="ATTENDING">✓ <span><strong>I'll be attending</strong><small>Can't wait to celebrate!</small></span></button>
+            <button type="button" class="choice {% if rsvp.response == 'NOT_ATTENDING' %}active{% endif %}" data-choice data-value="NOT_ATTENDING">× <span><strong>I'm not attending</strong><small>Sending love from afar</small></span></button>
+            <button type="button" class="choice {% if rsvp.response == 'MAYBE' %}active{% endif %}" data-choice data-value="MAYBE">? <span><strong>Maybe</strong><small>I'll let you know soon</small></span></button>
+        </div>
+        <div class="party-panel {% if rsvp.response != 'ATTENDING' %}is-hidden{% endif %}" data-party-panel>
+            <div class="party-head"><strong>Number of guests</strong><span>Maximum {{ guest.allowed_party_size }}</span></div>
+            <div class="counter-row"><div><strong>Adults</strong><small>Including yourself</small></div><div class="stepper"><button type="button" data-step="-1" data-target="adults">−</button><input id="adults" name="attending_adults" value="{{ rsvp.attending_adults|default:1 }}" readonly><button type="button" data-step="1" data-target="adults">+</button></div></div>
+            <div class="counter-row"><div><strong>Children</strong><small>Part of your invitation</small></div><div class="stepper"><button type="button" data-step="-1" data-target="children">−</button><input id="children" name="attending_children" value="{{ rsvp.attending_children|default:0 }}" readonly><button type="button" data-step="1" data-target="children">+</button></div></div>
+            <p class="party-warning" data-party-warning></p>
+        </div>
+        <label class="note-field"><span>Special message <small>(optional)</small></span><textarea name="notes" rows="4" maxlength="500" placeholder="Leave a message for the couple...">{{ rsvp.notes|default:'' }}</textarea></label>
+        <button type="submit" class="primary-action">Save RSVP</button>
+    </form>
+</section>

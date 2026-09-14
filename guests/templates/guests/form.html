@@ -1,5 +1,10 @@
 {% extends 'dashboard/base.html' %}
 {% block title %}{% if editing %}Edit Guest{% else %}Add Guest{% endif %} · EverAfter{% endblock %}
+{% block extra_head %}
+<style>
+.duplicate-warning{margin-bottom:18px;padding:16px 18px;border:1px solid #e3bd72;border-radius:14px;background:#fff8e8}.duplicate-warning h3{margin:0 0 6px;font:600 18px Georgia,serif;color:#72501d}.duplicate-warning p{margin:0 0 8px;color:#7c6746;font-size:12px}.duplicate-warning ul{margin:8px 0 0;padding-left:20px;color:#6d5530;font-size:12px;line-height:1.55}.duplicate-match-list{display:grid;gap:7px;margin-top:12px}.duplicate-match{padding:9px 11px;border-radius:10px;background:#fff;border:1px solid #ead8b5;font-size:11px}.duplicate-match strong{display:block;color:#27333d}.duplicate-confirm-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="page-head guest-form-head">
@@ -17,6 +22,27 @@
 
         {% if form.non_field_errors %}
             <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {% if duplicate_warnings %}
+        <div class="duplicate-warning">
+            <h3>Possible duplicate guest</h3>
+            <p>Duplicates are allowed for families sharing contact details, but please review before saving.</p>
+            <ul>{% for warning in duplicate_warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+            {% if duplicate_matches %}
+            <div class="duplicate-match-list">
+                {% for match in duplicate_matches %}
+                <div class="duplicate-match"><strong>{{ match.name }}</strong>{{ match.phone|default:'No phone' }}{% if match.email %} · {{ match.email }}{% endif %}{% if match.group %} · {{ match.group.name }}{% endif %}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <input type="hidden" name="confirm_duplicate" value="1">
+            <div class="duplicate-confirm-actions">
+                <a class="btn btn-outline" href="{% url 'guests:list' %}">Cancel</a>
+                {% if not editing %}<button class="btn btn-soft" type="submit" name="action" value="save_add_another">Confirm & Add Another</button>{% endif %}
+                <button class="btn" type="submit" name="action" value="save">Confirm & Save</button>
+            </div>
+        </div>
         {% endif %}
 
         <div class="section-title">
@@ -94,6 +120,7 @@
             </div>
         </div>
 
+        {% if not duplicate_warnings %}
         <div class="guest-form-actions">
             <a class="btn btn-outline" href="{% url 'guests:list' %}">Cancel</a>
             {% if not editing %}
@@ -101,32 +128,17 @@
             {% endif %}
             <button class="btn" type="submit" name="action" value="save">{% if editing %}Save Changes{% else %}Add Guest{% endif %}</button>
         </div>
+        {% endif %}
     </form>
 
     <aside class="panel guest-guide-card">
         <p class="eyebrow">Quick Guide</p>
         <h2>How this guest will work</h2>
-        <div class="guide-item">
-            <span>01</span>
-            <div><strong>Create guest</strong><p>Name, contact and party size are saved under {{ wedding.name }}.</p></div>
-        </div>
-        <div class="guide-item">
-            <span>02</span>
-            <div><strong>Create invitation</strong><p>The guest can receive a personal invitation link and QR code.</p></div>
-        </div>
-        <div class="guide-item">
-            <span>03</span>
-            <div><strong>Collect RSVP</strong><p>Attendance numbers will update automatically on the dashboard.</p></div>
-        </div>
-        <div class="guide-item">
-            <span>04</span>
-            <div><strong>Wedding day</strong><p>The same guest record can later power QR check-in and return gifts.</p></div>
-        </div>
-        <div class="capacity-box">
-            <span>Wedding guest limit</span>
-            <strong>{{ wedding.guest_limit }}</strong>
-            <small>Party sizes across all guest records count toward this limit.</small>
-        </div>
+        <div class="guide-item"><span>01</span><div><strong>Create guest</strong><p>Name, contact and party size are saved under {{ wedding.name }}.</p></div></div>
+        <div class="guide-item"><span>02</span><div><strong>Create invitation</strong><p>The guest can receive a personal invitation link and QR code.</p></div></div>
+        <div class="guide-item"><span>03</span><div><strong>Collect RSVP</strong><p>Attendance numbers will update automatically on the dashboard.</p></div></div>
+        <div class="guide-item"><span>04</span><div><strong>Wedding day</strong><p>The same guest record powers partial QR check-in and return gifts.</p></div></div>
+        <div class="capacity-box"><span>Wedding guest limit</span><strong>{{ wedding.guest_limit }}</strong><small>Party sizes across all guest records count toward this limit.</small></div>
     </aside>
 </div>
 {% endblock %}

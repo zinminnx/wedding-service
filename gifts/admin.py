@@ -24,7 +24,7 @@ class GiftPaymentMethodAdmin(admin.ModelAdmin):
 
 @admin.register(GuestGiftDeclaration)
 class GuestGiftDeclarationAdmin(admin.ModelAdmin):
-    list_display = ("guest", "wedding", "gift_choice", "payment_method_label", "payment_status", "updated_at")
+    list_display = ("guest", "wedding", "gift_choice", "payment_method_label", "payment_status", "payment_reviewed_at", "payment_reviewed_by", "updated_at")
     list_filter = ("gift_choice", "payment_status", "wedding")
     search_fields = ("guest__name", "guest__phone", "payment_reference")
 

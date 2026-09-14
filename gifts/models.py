@@ -81,12 +81,6 @@ class GiftPaymentMethod(models.Model):
 
     class Meta:
         ordering = ["sort_order", "id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["wedding", "name"],
-                name="unique_gift_payment_method_name_per_wedding",
-            )
-        ]
 
     def __str__(self):
         return f"{self.name} - {self.wedding.name}"
@@ -141,6 +135,14 @@ class GuestGiftDeclaration(models.Model):
         default=PaymentStatus.NOT_REQUIRED,
         db_index=True,
     )
+    payment_reviewed_at = models.DateTimeField(null=True, blank=True)
+    payment_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_guest_gift_declarations",
+    )
     notes = models.CharField(max_length=255, blank=True)
 
     declared_at = models.DateTimeField(auto_now_add=True)
@@ -162,11 +164,16 @@ class GuestGiftDeclaration(models.Model):
             self.amount = None
             self.payment_reference = ""
             self.payment_status = self.PaymentStatus.NOT_REQUIRED
+            self.payment_reviewed_at = None
+            self.payment_reviewed_by = None
         else:
             if self.payment_method_record_id:
                 self.payment_method = self.payment_method_record.name
             if self.payment_status == self.PaymentStatus.NOT_REQUIRED:
                 self.payment_status = self.PaymentStatus.GUEST_SENT
+            if self.payment_status == self.PaymentStatus.GUEST_SENT:
+                self.payment_reviewed_at = None
+                self.payment_reviewed_by = None
         super().save(*args, **kwargs)
 
     @property

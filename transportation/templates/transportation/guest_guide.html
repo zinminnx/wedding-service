@@ -1,0 +1,58 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Transportation · {{ wedding.name }}</title>
+  <link rel="stylesheet" href="{% static 'transportation/css/transportation.css' %}?v=11.0">
+</head>
+<body class="transport-public-page">
+  <main class="transport-public-shell">
+    <a class="transport-back" href="{% url 'invitations:detail' invitation.token %}">← Back to Invitation</a>
+    <section class="transport-public-card">
+      <p class="transport-kicker">EverAfter · Guest Travel</p>
+      <h1>Find a Bus</h1>
+      <p class="transport-public-lead">Destination: <strong>{{ destination.name|default:'Wedding Venue' }}</strong></p>
+      {% if destination.address %}<p class="transport-public-address">{{ destination.address }}</p>{% endif %}
+
+      {% if route_result.available and route_result.routes %}
+        <div class="route-list">
+          {% for route in route_result.routes %}
+          <article class="route-card">
+            <strong>{{ route.route_number }} {{ route.bus_name }}</strong>
+            <span>{{ route.boarding_stop }} → {{ route.drop_off_stop }}</span>
+            {% if route.transfer_details %}<small>{{ route.transfer_details }}</small>{% endif %}
+          </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="route-unavailable">
+          <span>Route provider not connected</span>
+          <h2>Use the venue map for now</h2>
+          <p>{{ transport_settings.fallback_message }}</p>
+          <small>{{ route_result.message }}</small>
+        </div>
+      {% endif %}
+
+      <div class="transport-public-actions">
+        {% if google_maps_url %}<a class="transport-map-button smart-public-map" href="{{ google_maps_url }}" data-google="{{ google_maps_url }}" data-apple="{{ apple_maps_url }}" target="_blank" rel="noopener">Open in Maps</a>{% endif %}
+        {% if google_maps_url %}<a class="transport-map-button secondary" href="{{ google_maps_url }}" target="_blank" rel="noopener">Google Maps</a>{% endif %}
+        {% if apple_maps_url %}<a class="transport-map-button secondary" href="{{ apple_maps_url }}" target="_blank" rel="noopener">Apple Maps</a>{% endif %}
+      </div>
+
+      <p class="transport-public-privacy">This page does not collect your current location. A future live bus search will ask permission before using an origin location.</p>
+    </section>
+  </main>
+<script>
+(function(){
+  document.querySelectorAll('.smart-public-map').forEach(function(link){
+    var ua = navigator.userAgent || '';
+    var apple = /iPhone|iPad|iPod|Macintosh/.test(ua);
+    var target = apple && link.dataset.apple ? link.dataset.apple : link.dataset.google;
+    if (target) link.setAttribute('href', target);
+  });
+})();
+</script>
+</body>
+</html>

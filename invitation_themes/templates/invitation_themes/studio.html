@@ -1,0 +1,126 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Invitation Design Studio · EverAfter{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'invitation_themes/css/studio.css' %}?v=10.7">{% endblock %}
+{% block content %}
+<div class="page-head theme-page-head">
+    <div>
+        <p class="eyebrow">Invitation Design</p>
+        <h1>Design Studio</h1>
+        <p class="lead">Choose a theme, control the invitation sections, preview the draft, then publish everything together.</p>
+    </div>
+    <div class="theme-status-card">
+        <span>Live theme</span>
+        <strong>{% if design.published_theme %}{{ design.published_theme.name }}{% else %}EverAfter default{% endif %}</strong>
+        <small>{% if design.published_at %}Published {{ design.published_at|date:'d M Y · g:i A' }}{% else %}Using system default until first publish{% endif %}</small>
+    </div>
+</div>
+
+<div class="studio-flow">
+    <span class="active">1 <b>Choose</b></span><i>→</i><span>2 <b>Preview</b></span><i>→</i><span>3 <b>Customize</b></span><i>→</i><span>4 <b>Sections</b></span><i>→</i><span>5 <b>Publish</b></span>
+</div>
+
+{% if published_legacy %}
+<div class="legacy-theme-note panel">
+    <div><p class="eyebrow">Existing live theme</p><h2>{{ published_legacy.name }}</h2><p>Main Admin has disabled or hidden this theme. Existing live invitations continue rendering safely, but the theme cannot be newly selected again after you move away from it.</p></div>
+    <a class="btn btn-outline" target="_blank" href="{% url 'invitation_themes:preview' published_legacy.key %}">Preview current</a>
+</div>
+{% endif %}
+
+<div class="theme-toolbar">
+    <div><p class="eyebrow">Theme Gallery</p><h2>Published themes</h2></div>
+    <span>{{ themes|length }} available</span>
+</div>
+
+<div class="theme-gallery">
+{% for theme in themes %}
+    <article class="theme-card {% if design.draft_theme_id == theme.id %}selected{% endif %}">
+        <div class="theme-preview theme-mini-{{ theme.layout_key }}" style="--mini-accent: {{ theme.config.accent }}; --mini-bg: {{ theme.config.background }};">
+            {% if theme.preview_image %}<img src="{{ theme.preview_image.url }}" alt="{{ theme.name }} preview">{% else %}
+            <div class="mini-top"></div><div class="mini-title">A & M</div><div class="mini-line"></div><div class="mini-card"></div><div class="mini-card small"></div>
+            {% endif %}
+            {% if theme.featured %}<span class="featured-chip">Featured</span>{% endif %}
+        </div>
+        <div class="theme-card-body">
+            <div class="theme-card-title"><div><strong>{{ theme.name }}</strong><span>{{ theme.get_category_display }} · v{{ theme.version }}</span></div>{% if theme.is_default %}<span class="default-chip">Default</span>{% endif %}</div>
+            <p>{{ theme.description }}</p>
+            <div class="theme-actions">
+                <a class="btn btn-outline" target="_blank" href="{% url 'invitation_themes:preview' theme.key %}?device=mobile">Preview</a>
+                {% if design.draft_theme_id == theme.id %}
+                    <span class="theme-selected-label">✓ Draft selected</span>
+                {% else %}
+                    <form method="post" action="{% url 'invitation_themes:use_theme' theme.key %}">{% csrf_token %}<button class="btn" type="submit">Use Theme</button></form>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+{% endfor %}
+</div>
+
+{% if design.draft_theme %}
+<div class="studio-bottom-grid">
+    <section class="panel customize-card">
+        <p class="eyebrow">Step 3</p>
+        <h2>Customize {{ design.draft_theme.name }}</h2>
+        <p>Only theme-safe options are exposed here. Theme structure remains controlled by the shared invitation engine.</p>
+        <form method="post" action="{% url 'invitation_themes:customize' %}" class="customize-form">
+            {% csrf_token %}
+            {% for field in customize_form %}
+                <label><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<em>{{ error }}</em>{% endfor %}</label>
+            {% endfor %}
+            <button class="btn btn-soft" type="submit">Save Draft Customization</button>
+        </form>
+    </section>
+
+    <section class="panel publish-card">
+        <p class="eyebrow">Step 5</p>
+        <h2>Preview & Publish</h2>
+        <p>Theme, customization and section layout stay draft-only until you publish.</p>
+        <div class="device-preview-links">
+            <a target="_blank" href="{% url 'invitation_themes:preview' design.draft_theme.key %}?device=mobile">Mobile Preview</a>
+            <a target="_blank" href="{% url 'invitation_themes:preview' design.draft_theme.key %}?device=tablet">Tablet Preview</a>
+            <a target="_blank" href="{% url 'invitation_themes:preview' design.draft_theme.key %}?device=desktop">Desktop Preview</a>
+        </div>
+        <div class="publish-summary"><span>Draft</span><strong>{{ design.draft_theme.name }}</strong><small>{{ enabled_section_count }} active section(s) · Live: {% if design.published_theme %}{{ design.published_theme.name }}{% else %}system default{% endif %}</small></div>
+        <form method="post" action="{% url 'invitation_themes:publish' %}" onsubmit="return confirm('Publish this theme and section layout now?');">{% csrf_token %}<button class="btn publish-btn" type="submit">Publish Invitation Design</button></form>
+    </section>
+</div>
+
+<section class="panel section-builder-card" id="section-builder">
+    <div class="section-builder-head">
+        <div><p class="eyebrow">Step 4</p><h2>Invitation Sections</h2><p>Turn sections on or off and move them into the order your guests should see. Hero remains structurally first so every theme stays stable.</p></div>
+        <div class="section-count"><strong>{{ enabled_section_count }}</strong><span>active now</span></div>
+    </div>
+    <form method="post" action="{% url 'invitation_themes:save_sections' %}" data-section-builder>
+        {% csrf_token %}
+        <div class="section-list" data-section-list>
+            {% for item in section_rows %}
+            <article class="section-row {% if not item.runtime_available %}is-unavailable{% endif %}" data-section-row data-key="{{ item.key }}">
+                <input type="hidden" name="section_order" value="{{ item.key }}">
+                <div class="section-order-controls">
+                    {% if item.fixed_first %}
+                        <span class="fixed-order">01</span>
+                    {% else %}
+                        <button type="button" data-move="up" title="Move up" aria-label="Move {{ item.label }} up">↑</button>
+                        <button type="button" data-move="down" title="Move down" aria-label="Move {{ item.label }} down">↓</button>
+                    {% endif %}
+                </div>
+                <div class="section-row-copy">
+                    <div class="section-row-title"><strong>{{ item.label }}</strong>{% if item.fixed_first %}<span class="section-chip fixed">Fixed first</span>{% endif %}{% if not item.runtime_available %}<span class="section-chip future">{{ item.runtime_reason }}</span>{% endif %}</div>
+                    <p>{{ item.description }}</p>
+                </div>
+                <label class="section-switch">
+                    <input type="checkbox" name="section_enabled" value="{{ item.key }}" {% if item.enabled %}checked{% endif %} {% if not item.runtime_available %}disabled{% endif %}>
+                    <span></span><b>{% if item.enabled and item.runtime_available %}On{% else %}Off{% endif %}</b>
+                </label>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="section-builder-actions"><span>Saving changes here does not change the live invitation until Publish.</span><button class="btn" type="submit">Save Draft Sections</button></div>
+    </form>
+</section>
+{% endif %}
+
+<div class="panel admin-theme-note"><div><p class="eyebrow">Main Admin controls</p><h2>Theme Registry</h2><p>Published themes must declare compatibility with the complete reusable section registry. Disabled themes continue working for weddings already using them.</p></div>{% if request.user.is_superuser %}<a class="btn btn-outline" href="{% url 'admin:invitation_themes_invitationtheme_changelist' %}">Open Theme Admin</a>{% endif %}</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'invitation_themes/js/section_builder.js' %}?v=10.7"></script>{% endblock %}
