@@ -2,8 +2,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.urls import include, path
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    path("",RedirectView.as_view(url="/dashboard/", permanent=False),
+        name="home",
+    ),
+    path("health/", include("security_hardening.urls")),
     path("health/", include("security_hardening.urls")),
     path("", include("audit_analytics.urls")),
     path("", include("dashboard_themes.urls")),
