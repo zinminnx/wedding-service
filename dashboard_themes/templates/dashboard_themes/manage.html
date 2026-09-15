@@ -1,0 +1,39 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Manage Dashboard Themes · EverAfter{% endblock %}
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'dashboard_themes/css/manager.css' %}?v=13.1">
+{% endblock %}
+{% block content %}
+<div class="dt-page">
+  <div class="dt-head">
+    <div><p class="dt-eyebrow">Main Admin</p><h1>Dashboard Theme Platform</h1><p>Control which visual themes are available. Existing users keep a retired theme until they switch.</p></div>
+    <div class="dt-head-actions"><a class="dt-btn dt-btn-secondary" href="{% url 'dashboard_themes:gallery' %}">My Appearance</a><a class="dt-btn dt-btn-primary" href="{% url 'dashboard_themes:create' %}">New Theme</a></div>
+  </div>
+  <section class="dt-card">
+    <div class="dt-table-wrap">
+      <table class="dt-table">
+        <thead><tr><th>Theme</th><th>Status</th><th>Users</th><th>Order</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for theme in themes %}
+          <tr>
+            <td><div class="dt-swatch-row"><span class="dt-swatch" style="background:{{ theme.sidebar_bg }}"></span><span class="dt-swatch" style="background:{{ theme.accent }}"></span><div><strong>{{ theme.name }}</strong><small>{{ theme.key }}</small></div></div></td>
+            <td>{% if theme.is_default %}<span class="dt-pill">Default</span>{% endif %} {% if theme.is_active %}<span class="dt-pill good">Active</span>{% else %}<span class="dt-pill muted">Retired</span>{% endif %}</td>
+            <td>{{ theme.user_preferences.count }}</td>
+            <td>{{ theme.sort_order }}</td>
+            <td>
+              <div class="dt-row-actions">
+                <a href="{% url 'dashboard_themes:edit' theme.pk %}">Edit</a>
+                {% if not theme.is_default %}<form method="post" action="{% url 'dashboard_themes:action' theme.pk %}">{% csrf_token %}<button name="action" value="default">Set default</button></form>{% endif %}
+                <form method="post" action="{% url 'dashboard_themes:action' theme.pk %}">{% csrf_token %}{% if theme.is_active %}<button name="action" value="deactivate" {% if theme.is_default %}disabled{% endif %}>Retire</button>{% else %}<button name="action" value="activate">Activate</button>{% endif %}</form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="5">No themes.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

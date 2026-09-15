@@ -1,0 +1,101 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Archive & Restore · {{ wedding.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'archive_restore/css/archive.css' %}?v=13.0">
+{% endblock %}
+
+{% block content %}
+<div class="archive-page">
+    <div class="archive-hero">
+        <div>
+            <p class="archive-eyebrow">Wedding Lifecycle</p>
+            <h1>Archive & Restore</h1>
+            <p>Create a self-contained, checksum-verified export before archiving. EverAfter v13.0 never purges database rows or storage files automatically.</p>
+        </div>
+        <form method="post" action="{% url 'archive_restore:create' %}">
+            {% csrf_token %}
+            <button class="archive-btn primary" type="submit">Create Verified Archive</button>
+        </form>
+    </div>
+
+    <div class="archive-status-grid">
+        <div class="archive-stat"><span>Workspace</span><strong>{{ wedding.get_status_display }}</strong><small>{{ wedding.public_id }}</small></div>
+        <div class="archive-stat"><span>Snapshots</span><strong>{{ snapshots|length }}</strong><small>latest 50 shown</small></div>
+        <div class="archive-stat"><span>Latest verified</span><strong>{% if latest_verified %}Ready{% else %}None{% endif %}</strong><small>{% if latest_verified %}{{ latest_verified.public_id }}{% else %}Create one before archive/delete workflow{% endif %}</small></div>
+    </div>
+
+    <div class="archive-layout">
+        <section class="archive-card archive-main-card">
+            <div class="archive-card-head">
+                <div><p class="archive-eyebrow">Recovery Points</p><h2>Archive Snapshots</h2></div>
+            </div>
+            {% if snapshots %}
+            <div class="archive-list">
+                {% for snapshot in snapshots %}
+                <article class="archive-row">
+                    <div class="archive-row-main">
+                        <div class="archive-row-title"><strong>{{ snapshot.public_id }}</strong><span class="archive-badge state-{{ snapshot.status|lower }}">{{ snapshot.get_status_display }}</span></div>
+                        <p>{{ snapshot.created_at|date:'d M Y · g:i A' }}{% if snapshot.created_by %} · {{ snapshot.created_by.get_full_name|default:snapshot.created_by.username }}{% endif %}</p>
+                        <div class="archive-meta">
+                            <span>{{ snapshot.archive_size|filesizeformat }}</span>
+                            <span>{{ snapshot.data_object_count }} DB objects</span>
+                            <span>{{ snapshot.file_count }} files</span>
+                            {% if snapshot.stored_object %}<span>{{ snapshot.stored_object.get_backend_display }}</span>{% endif %}
+                        </div>
+                        {% if snapshot.verified_at %}<p class="archive-verified">✓ Verified {{ snapshot.verified_at|date:'d M Y · g:i A' }} · SHA {{ snapshot.sha256|slice:':12' }}…</p>{% endif %}
+                        {% if snapshot.last_error %}<p class="archive-error">{{ snapshot.last_error }}</p>{% endif %}
+                    </div>
+                    <div class="archive-actions">
+                        {% if snapshot.stored_object %}<a class="archive-btn secondary" href="{% url 'archive_restore:download' snapshot.public_id %}">Download</a>{% endif %}
+                        <form method="post" action="{% url 'archive_restore:verify' snapshot.public_id %}">{% csrf_token %}<button class="archive-btn secondary" type="submit">Verify</button></form>
+                        {% if snapshot.is_verified %}
+                        <form method="post" action="{% url 'archive_restore:archive_wedding' snapshot.public_id %}">{% csrf_token %}<button class="archive-btn secondary" type="submit">Archive Wedding</button></form>
+                        {% if wedding.status == 'ARCHIVED' or wedding.status == 'DELETE_PENDING' %}
+                        <form method="post" action="{% url 'archive_restore:restore_wedding' snapshot.public_id %}">{% csrf_token %}<button class="archive-btn primary" type="submit">Restore to Draft</button></form>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="archive-empty"><span>◇</span><h3>No archive snapshots yet</h3><p>Create the first verified recovery point before moving this wedding into an archive lifecycle state.</p></div>
+            {% endif %}
+        </section>
+
+        <aside class="archive-side">
+            <section class="archive-card">
+                <div class="archive-card-head compact"><div><p class="archive-eyebrow">Safety Rule</p><h2>Verify Before Archive</h2></div></div>
+                <ol class="archive-steps">
+                    <li><span>1</span><div><strong>Export</strong><small>Database-scoped records plus managed and legacy uploaded files.</small></div></li>
+                    <li><span>2</span><div><strong>Verify</strong><small>Outer ZIP SHA-256, data.json checksum and every archived file checksum.</small></div></li>
+                    <li><span>3</span><div><strong>Archive</strong><small>Workspace becomes Archived only after a verified recovery point exists.</small></div></li>
+                    <li><span>4</span><div><strong>Restore</strong><small>v13.0 reopens retained data as Draft so invitations are not silently republished.</small></div></li>
+                </ol>
+            </section>
+
+            <section class="archive-card archive-danger-card">
+                <div class="archive-card-head compact"><div><p class="archive-eyebrow">Retention Gate</p><h2>Delete Pending</h2></div></div>
+                <p>v13.0 can mark a workspace Delete Pending only when you choose a verified snapshot. It does <strong>not</strong> purge rows or files.</p>
+                {% if latest_verified %}
+                <form method="post" action="{% url 'archive_restore:delete_pending' latest_verified.public_id %}" class="archive-confirm-form">
+                    {% csrf_token %}
+                    <label><span>Type {{ wedding.public_id }}</span><input type="text" name="confirm" autocomplete="off" required></label>
+                    <button class="archive-btn danger" type="submit">Mark Delete Pending</button>
+                </form>
+                {% else %}<p class="archive-muted">Create and verify an archive first.</p>{% endif %}
+            </section>
+
+            <section class="archive-card">
+                <div class="archive-card-head compact"><div><p class="archive-eyebrow">Audit Trail</p><h2>Recent Events</h2></div></div>
+                {% if events %}<div class="archive-events">
+                    {% for event in events %}<div class="archive-event"><span>{{ event.created_at|date:'d M · g:i A' }}</span><strong>{{ event.get_action_display }}</strong><small>{{ event.message }}</small></div>{% endfor %}
+                </div>{% else %}<p class="archive-muted">No lifecycle events yet.</p>{% endif %}
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

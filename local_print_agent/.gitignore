@@ -1,0 +1,5 @@
+agent.env
+.agent-venv/
+spool/
+__pycache__/
+*.pyc

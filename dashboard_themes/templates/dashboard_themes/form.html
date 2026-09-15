@@ -1,0 +1,23 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}{% if editing %}Edit{% else %}New{% endif %} Dashboard Theme · EverAfter{% endblock %}
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'dashboard_themes/css/manager.css' %}?v=13.1">
+{% endblock %}
+{% block content %}
+<div class="dt-page">
+  <div class="dt-head"><div><p class="dt-eyebrow">Main Admin</p><h1>{% if editing %}Edit {{ theme.name }}{% else %}Create Dashboard Theme{% endif %}</h1><p>Visual settings only. Permissions remain controlled by wedding roles and modules.</p></div><a class="dt-btn dt-btn-secondary" href="{% url 'dashboard_themes:manage' %}">Back</a></div>
+  <section class="dt-card">
+    <form method="post" class="dt-form">{% csrf_token %}
+      {% if form.non_field_errors %}<div class="dt-errors">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="dt-form-grid">
+        {% for field in form %}
+        <label class="dt-field {% if field.name == 'description' %}wide{% endif %}"><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<em>{{ error }}</em>{% endfor %}</label>
+        {% endfor %}
+      </div>
+      <div class="dt-actions"><button class="dt-btn dt-btn-primary" type="submit">Save Theme</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

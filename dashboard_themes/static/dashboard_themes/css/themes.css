@@ -1,0 +1,30 @@
+/* EverAfter v13.1 dashboard visual layer. Presentation only; no role or feature logic lives here. */
+.ea-dashboard-themed {
+  --ea-sidebar-bg:#101827;
+  --ea-sidebar-text:#F8FAFC;
+  --ea-content-bg:#F7F3EA;
+  --ea-surface-bg:#FFFFFF;
+  --ea-accent:#C7A35A;
+  --ea-text:#1F2937;
+  --ea-muted:#6B7280;
+  --ea-border:#E8E1D5;
+  --ea-radius:14px;
+  background:var(--ea-content-bg);
+  color:var(--ea-text);
+  font-family:var(--ea-body-font, Arial, sans-serif);
+}
+.ea-dashboard-themed .sidebar{background:var(--ea-sidebar-bg);color:var(--ea-sidebar-text)}
+.ea-dashboard-themed .sidebar a,.ea-dashboard-themed .sidebar strong,.ea-dashboard-themed .brand-name{color:var(--ea-sidebar-text)}
+.ea-dashboard-themed .main-area,.ea-dashboard-themed .content-wrap{background:var(--ea-content-bg);color:var(--ea-text)}
+.ea-dashboard-themed .topbar{background:var(--ea-surface-bg);border-color:var(--ea-border)}
+.ea-dashboard-themed h1,.ea-dashboard-themed h2,.ea-dashboard-themed h3{font-family:var(--ea-heading-font, Georgia, serif);color:var(--ea-text)}
+.ea-dashboard-themed .nav-item.active{background:color-mix(in srgb,var(--ea-accent) 22%,transparent);border-color:color-mix(in srgb,var(--ea-accent) 45%,transparent)}
+.ea-dashboard-themed .nav-item.active,.ea-dashboard-themed .text-link{color:var(--ea-accent)}
+.ea-dashboard-themed .flash-message{border-color:var(--ea-border);background:var(--ea-surface-bg);color:var(--ea-text)}
+.ea-dashboard-themed .workspace-menu,.ea-dashboard-themed .search-box{background:var(--ea-surface-bg);border-color:var(--ea-border);color:var(--ea-text)}
+.ea-dashboard-themed.density-compact .content-wrap{padding-top:18px;padding-bottom:18px}
+.ea-dashboard-themed.density-compact .nav-item{padding-top:7px;padding-bottom:7px}
+.ea-dashboard-themed.density-compact .topbar{min-height:58px}
+.ea-dashboard-themed.density-spacious .content-wrap{padding-top:38px;padding-bottom:38px}
+.ea-dashboard-themed.density-spacious .nav-item{padding-top:13px;padding-bottom:13px}
+.ea-dashboard-themed.density-spacious .topbar{min-height:76px}

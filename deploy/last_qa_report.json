@@ -1,0 +1,168 @@
+{
+  "everafter_version": "14.1",
+  "production_mode": false,
+  "debug": true,
+  "counts": {
+    "PASS": 24,
+    "WARN": 2,
+    "FAIL": 0
+  },
+  "items": [
+    {
+      "code": "django.check",
+      "level": "PASS",
+      "message": "Django system check has no errors.",
+      "detail": ""
+    },
+    {
+      "code": "database.connection",
+      "level": "PASS",
+      "message": "Database connection is healthy.",
+      "detail": ""
+    },
+    {
+      "code": "database.migrations",
+      "level": "PASS",
+      "message": "No pending migrations.",
+      "detail": ""
+    },
+    {
+      "code": "apps.core",
+      "level": "PASS",
+      "message": "Core EverAfter apps are installed.",
+      "detail": ""
+    },
+    {
+      "code": "apps.registration",
+      "level": "PASS",
+      "message": "Installed milestone apps are registered.",
+      "detail": ""
+    },
+    {
+      "code": "apps.milestones",
+      "level": "PASS",
+      "message": "All roadmap app directories through v14.0 are present.",
+      "detail": ""
+    },
+    {
+      "code": "urls.reverse",
+      "level": "PASS",
+      "message": "23 critical route(s) reversed successfully.",
+      "detail": ""
+    },
+    {
+      "code": "security.mode",
+      "level": "WARN",
+      "message": "Local development mode is active; production-only HTTPS checks are not expected to pass yet.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.guests",
+      "level": "PASS",
+      "message": "No Guest/Group cross-wedding integrity problems found.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.invitations",
+      "level": "PASS",
+      "message": "No Invitation/Guest cross-wedding integrity problems found.",
+      "detail": ""
+    },
+    {
+      "code": "tokens.invitation",
+      "level": "PASS",
+      "message": "Invitation token and QR token fields are populated.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.rsvp",
+      "level": "PASS",
+      "message": "No RSVP relation cross-wedding integrity problems found.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.checkin",
+      "level": "PASS",
+      "message": "No Check-in relation cross-wedding integrity problems found.",
+      "detail": ""
+    },
+    {
+      "code": "checkin.override",
+      "level": "PASS",
+      "message": "No unapproved party-size overages found.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.photos",
+      "level": "PASS",
+      "message": "Photo relations remain wedding-scoped.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.photo_storage",
+      "level": "PASS",
+      "message": "Photo storage objects remain wedding-scoped.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.printing",
+      "level": "PASS",
+      "message": "Print jobs remain wedding-scoped.",
+      "detail": ""
+    },
+    {
+      "code": "printing.approval",
+      "level": "PASS",
+      "message": "Active print jobs only reference approved photos.",
+      "detail": ""
+    },
+    {
+      "code": "finance.visibility",
+      "level": "PASS",
+      "message": "Planner Budget items satisfy shared-visibility rules.",
+      "detail": ""
+    },
+    {
+      "code": "tenant.financial_docs",
+      "level": "PASS",
+      "message": "Financial documents remain wedding-scoped.",
+      "detail": ""
+    },
+    {
+      "code": "storage.remote_id",
+      "level": "PASS",
+      "message": "Available OneDrive objects have remote item ids.",
+      "detail": ""
+    },
+    {
+      "code": "storage.failed",
+      "level": "PASS",
+      "message": "No storage objects are currently marked FAILED.",
+      "detail": ""
+    },
+    {
+      "code": "archive.verify",
+      "level": "PASS",
+      "message": "READY archive snapshots are verified.",
+      "detail": ""
+    },
+    {
+      "code": "archive.hash",
+      "level": "PASS",
+      "message": "Ready/restored archives have SHA-256 metadata.",
+      "detail": ""
+    },
+    {
+      "code": "git.secrets",
+      "level": "PASS",
+      "message": "Known runtime secret files are not tracked by Git.",
+      "detail": ""
+    },
+    {
+      "code": "git.dirty",
+      "level": "WARN",
+      "message": "Working tree has 19 uncommitted path(s).",
+      "detail": "M config/settings.py;  M config/urls.py;  M modules/management/commands/seed_modules.py;  M modules/middleware.py;  M weddings/templates/dashboard/base.html; ?? README_V12_2.md; ?? README_V12_3.md; ?? README_V13_0.md; ?? README_V13_1.md; ?? README_V13_2.md"
+    }
+  ]
+}

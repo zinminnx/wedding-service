@@ -1,0 +1,21 @@
+# Example only. Adjust User, Group, WorkingDirectory and virtualenv paths.
+[Unit]
+Description=EverAfter Django Web
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/wedding-service
+EnvironmentFile=/www/wwwroot/wedding-service/.env
+ExecStart=/www/wwwroot/wedding-service/.venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -
+Restart=always
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/www/wwwroot/wedding-service/media /www/wwwroot/wedding-service/logs
+
+[Install]
+WantedBy=multi-user.target

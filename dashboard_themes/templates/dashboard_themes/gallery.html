@@ -1,0 +1,55 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block title %}Appearance · EverAfter{% endblock %}
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'dashboard_themes/css/manager.css' %}?v=13.1">
+{% endblock %}
+{% block content %}
+<div class="dt-page">
+  <div class="dt-head">
+    <div>
+      <p class="dt-eyebrow">Personal workspace</p>
+      <h1>Dashboard Appearance</h1>
+      <p>Choose your visual theme and layout density. This changes presentation only; your wedding role and permissions never change.</p>
+    </div>
+    {% if dashboard_theme_admin %}<a class="dt-btn dt-btn-secondary" href="{% url 'dashboard_themes:manage' %}">Manage Themes</a>{% endif %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <section class="dt-card">
+      <div class="dt-section-head"><div><p class="dt-eyebrow">Visual Theme</p><h2>Choose a look</h2></div></div>
+      <div class="dt-theme-grid">
+        {% for theme in themes %}
+        <label class="dt-theme-option {% if current_theme and current_theme.pk == theme.pk %}selected{% endif %} {% if not theme.is_active %}retired{% endif %}"
+               style="--p-sidebar:{{ theme.sidebar_bg }};--p-content:{{ theme.content_bg }};--p-surface:{{ theme.surface_bg }};--p-accent:{{ theme.accent }};--p-text:{{ theme.text_color }};">
+          {% if theme.is_active %}<input type="radio" name="theme_id" value="{{ theme.pk }}" {% if current_theme and current_theme.pk == theme.pk %}checked{% endif %} required>{% else %}<input type="radio" checked disabled>{% endif %}
+          <div class="dt-preview">
+            <span class="dt-preview-side"></span>
+            <span class="dt-preview-main"><i></i><i></i><i></i></span>
+          </div>
+          <div class="dt-theme-copy">
+            <div><strong>{{ theme.name }}</strong>{% if theme.is_default %}<span class="dt-pill">Default</span>{% endif %}{% if not theme.is_active %}<span class="dt-pill muted">Retired</span>{% endif %}</div>
+            <p>{{ theme.description|default:'Dashboard visual theme' }}</p>
+          </div>
+        </label>
+        {% empty %}<div class="dt-empty">No dashboard themes are available.</div>{% endfor %}
+      </div>
+    </section>
+
+    <section class="dt-card">
+      <div class="dt-section-head"><div><p class="dt-eyebrow">Layout</p><h2>Density</h2><p>Layout density is independent from the visual theme.</p></div></div>
+      <div class="dt-density-grid">
+        {% for value,label in density_choices %}
+        <label class="dt-density-option">
+          <input type="radio" name="density" value="{{ value }}" {% if current_density == value %}checked{% endif %} required>
+          <span><strong>{{ label }}</strong>{% if value == 'COMPACT' %}<small>More information on screen</small>{% elif value == 'SPACIOUS' %}<small>More breathing room</small>{% else %}<small>Balanced everyday layout</small>{% endif %}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="dt-actions"><button class="dt-btn dt-btn-primary" type="submit">Apply Appearance</button></div>
+    </section>
+  </form>
+</div>
+{% endblock %}

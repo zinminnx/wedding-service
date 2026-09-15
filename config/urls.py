@@ -4,6 +4,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("health/", include("security_hardening.urls")),
+    path("", include("audit_analytics.urls")),
+    path("", include("dashboard_themes.urls")),
+    path("", include("archive_restore.urls")),
+    path("", include("printing.urls")),
     path("", include("integrations.urls")),
     path("", include("financial_docs.urls")),
     path("", include("vendors.urls")),

@@ -7,14 +7,17 @@ from .services import module_available
 
 
 NAMESPACE_MODULES = {
+    "audit_analytics": "analytics",
     "rsvp": "rsvp",
     "checkins": "checkins",
     "photos": "photos",
+    "printing": "printing",
     "staffing": "staffing",
     "transportation": "transportation",
     "budgeting": "budgeting",
     "financial_docs": "budgeting",
     "integrations": "onedrive",
+    "archive_restore": "archive_restore",
     "planner": "planner",
     "vendors": "vendors",
     "invitation_themes": "invitation_themes",

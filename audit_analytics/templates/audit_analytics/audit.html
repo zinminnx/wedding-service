@@ -1,0 +1,34 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Audit Trail · {{ wedding.name }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'audit_analytics/css/analytics.css' %}?v=13.2">
+{% endblock %}
+
+{% block content %}
+<div class="aa-page">
+  <div class="aa-head">
+    <div><p class="aa-kicker">Owner Security Record</p><h1>Audit Trail</h1><p>Successful authenticated mutations only. POST bodies, passwords, invitation tokens, agent tokens and IP addresses are not stored here.</p></div>
+    <div class="aa-actions"><a class="aa-btn aa-btn-soft" href="{% url 'audit_analytics:dashboard' %}">Analytics</a><a class="aa-btn aa-btn-primary" href="{% url 'audit_analytics:audit_export' %}?days={{ days_filter }}&category={{ category_filter }}&actor={{ actor_filter|urlencode }}&q={{ q|urlencode }}">Export CSV</a></div>
+  </div>
+
+  <form class="aa-filter" method="get">
+    <label><span>Range</span><select name="days"><option value="7" {% if days_filter == '7' %}selected{% endif %}>7 days</option><option value="30" {% if days_filter == '30' %}selected{% endif %}>30 days</option><option value="90" {% if days_filter == '90' %}selected{% endif %}>90 days</option><option value="all" {% if days_filter == 'all' %}selected{% endif %}>All history</option></select></label>
+    <label><span>Category</span><select name="category"><option value="">All categories</option>{% for value,label in category_choices %}<option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label><span>Actor</span><input type="search" name="actor" value="{{ actor_filter }}" placeholder="Username or name"></label>
+    <label class="aa-filter-wide"><span>Search</span><input type="search" name="q" value="{{ q }}" placeholder="Action, audit ID, entity or message"></label>
+    <button class="aa-btn aa-btn-primary" type="submit">Filter</button>
+    {% if q or actor_filter or category_filter %}<a class="aa-clear" href="{% url 'audit_analytics:audit' %}">Clear</a>{% endif %}
+  </form>
+
+  <section class="aa-card">
+    <div class="aa-card-head"><div><p class="aa-kicker">Immutable-style Application Log</p><h2>Recent Events</h2></div><span>Up to 250 rows shown</span></div>
+    {% if events %}
+    <div class="aa-table-wrap"><table class="aa-table"><thead><tr><th>Time</th><th>Category</th><th>Actor</th><th>Action</th><th>Entity</th><th>Message</th><th>Source</th></tr></thead><tbody>
+    {% for event in events %}<tr><td><strong>{{ event.created_at|date:'d M Y' }}</strong><small>{{ event.created_at|date:'g:i:s A' }}</small></td><td><span class="aa-pill">{{ event.get_category_display }}</span></td><td>{{ event.actor_label|default:'System' }}<small>{{ event.actor_role|default:'—' }}</small></td><td><code>{{ event.action }}</code><small>{{ event.public_id }}</small></td><td>{% if event.entity_type or event.entity_id %}{{ event.entity_type }}{% if event.entity_id %}<small>{{ event.entity_id }}</small>{% endif %}{% else %}—{% endif %}</td><td>{{ event.message|default:'—' }}</td><td>{{ event.get_source_display }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="aa-empty">No audit events match these filters.</div>{% endif %}
+  </section>
+</div>
+{% endblock %}

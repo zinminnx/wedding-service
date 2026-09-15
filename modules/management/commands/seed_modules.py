@@ -20,18 +20,18 @@ MODULES = [
     dict(key="photos", name="Guest Photos", description="Guest uploads, moderation and live slideshow.", system_enabled=True, visible_to_weddings=True, sort_order=150, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "PHOTO_STAFF"]),
 
     # Planned modules: registered now, disabled until their ZIP is installed.
-    dict(key="printing", name="Printing", description="Cloud print queue and venue print agent.", system_enabled=False, visible_to_weddings=False, sort_order=200, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "PRINT_STAFF"]),
+    dict(key="printing", name="Printing", description="Cloud print queue for approved wedding photos; local printer agent arrives in v12.3.", system_enabled=True, visible_to_weddings=True, sort_order=200, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "PRINT_STAFF"]),
     dict(key="invitation_themes", name="Invitation Themes", description="Dynamic invitation themes and Design Studio.", system_enabled=True, visible_to_weddings=True, sort_order=210, allowed_roles=["WEDDING_OWNER"]),
-    dict(key="dashboard_themes", name="Dashboard Themes", description="User-selectable dashboard visual themes.", system_enabled=False, visible_to_weddings=False, sort_order=220),
+    dict(key="dashboard_themes", name="Dashboard Themes", description="Per-user dashboard visual themes and layout density.", system_enabled=True, visible_to_weddings=False, sort_order=220),
     dict(key="transportation", name="Transportation", description="Guest travel guidance, maps and Bus Project provider integration.", system_enabled=True, visible_to_weddings=True, sort_order=230, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER"]),
     dict(key="budgeting", name="Budgeting", description="Couple budget, estimates, committed costs, payments and financial summary.", system_enabled=True, visible_to_weddings=True, sort_order=240, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "WEDDING_PLANNER"]),
     dict(key="planner", name="Wedding Planner", description="Planner tasks, checklist, appointments, reminders, notes and wedding-day run sheet.", system_enabled=True, visible_to_weddings=True, sort_order=250, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "WEDDING_PLANNER"]),
     dict(key="vendors", name="Vendors & Quotes", description="Wedding vendors, planner quotations, Owner approval and approved-cost budget integration.", system_enabled=True, visible_to_weddings=True, sort_order=255, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER", "WEDDING_PLANNER"]),
     dict(key="surveys", name="Surveys", description="Guest surveys and structured responses.", system_enabled=False, visible_to_weddings=False, sort_order=260),
     dict(key="onedrive", name="OneDrive Storage", description="Microsoft Graph storage foundation for media, documents and archive workflows.", system_enabled=True, visible_to_weddings=True, sort_order=270, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER"]),
-    dict(key="archive_restore", name="Archive & Restore", description="Export, archive, retention and restore lifecycle.", system_enabled=False, visible_to_weddings=False, sort_order=280),
+    dict(key="archive_restore", name="Archive & Restore", description="Verified wedding export, retention lifecycle and safe non-destructive restore.", system_enabled=True, visible_to_weddings=True, sort_order=280, allowed_roles=["WEDDING_OWNER"]),
     dict(key="notifications", name="Notifications", description="Wedding and operational notifications.", system_enabled=False, visible_to_weddings=False, sort_order=290),
-    dict(key="analytics", name="Analytics", description="Wedding operational and business analytics.", system_enabled=False, visible_to_weddings=False, sort_order=300),
+    dict(key="analytics", name="Audit & Analytics", description="Wedding operational analytics and owner audit trail.", system_enabled=True, visible_to_weddings=True, sort_order=300, allowed_roles=["WEDDING_OWNER", "WEDDING_MANAGER"]),
 ]
 
 DEPENDENCIES = {
@@ -79,7 +79,7 @@ class Command(BaseCommand):
             package.is_active = True
             package.save(update_fields=["is_default", "is_active", "updated_at"])
 
-        current_keys = {"accounts", "weddings", "guests", "invitations", "staffing", "rsvp", "gifts", "checkins", "return_gifts", "photos", "invitation_themes", "transportation", "budgeting", "planner", "vendors", "onedrive"}
+        current_keys = {"accounts", "weddings", "guests", "invitations", "staffing", "rsvp", "gifts", "checkins", "return_gifts", "photos", "invitation_themes", "transportation", "budgeting", "planner", "vendors", "onedrive", "printing", "archive_restore", "analytics"}
         package.modules.set([registry[key] for key in current_keys])
 
         created_profiles = 0

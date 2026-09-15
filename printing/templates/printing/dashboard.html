@@ -1,0 +1,113 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Printing · {{ wedding.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'printing/css/printing.css' %}?v=12.3">
+{% endblock %}
+
+{% block content %}
+<div class="print-page">
+    <div class="print-page-head">
+        <div>
+            <p class="print-eyebrow">Wedding Operations</p>
+            <h1>Print Queue</h1>
+            <p>Queue approved wedding photos in the cloud. Trusted Local Print Agents claim jobs and send them directly to venue printers.</p>
+        </div>
+        <div class="print-health {% if settings_obj.queue_enabled and not settings_obj.queue_paused %}is-ok{% else %}is-paused{% endif %}">
+            <span></span>
+            {% if not settings_obj.queue_enabled %}Queue disabled{% elif settings_obj.queue_paused %}Queue paused{% else %}Queue accepting jobs{% endif %}
+        </div>
+    </div>
+
+    <div class="print-stat-grid">
+        <div class="print-stat"><span>Queued</span><strong>{{ counts.queued }}</strong><small>Waiting for an agent</small></div>
+        <div class="print-stat"><span>Active</span><strong>{{ counts.active }}</strong><small>Claimed or printing</small></div>
+        <div class="print-stat"><span>Printed</span><strong>{{ counts.printed }}</strong><small>Completed jobs</small></div>
+        <div class="print-stat"><span>Failed</span><strong>{{ counts.failed }}</strong><small>Needs attention</small></div>
+    </div>
+
+    <div class="print-layout">
+        <section class="print-card print-main-card">
+            <div class="print-card-head">
+                <div><p class="print-eyebrow">Cloud Queue</p><h2>Print Jobs</h2></div>
+                <form method="get" class="print-filter">
+                    <select name="status">
+                        <option value="">All statuses</option>
+                        {% for value,label in status_choices %}<option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                    <button class="print-btn secondary" type="submit">Filter</button>
+                    {% if status_filter %}<a href="{% url 'printing:dashboard' %}">Clear</a>{% endif %}
+                </form>
+            </div>
+
+            {% if jobs %}
+            <div class="print-table-wrap">
+                <table class="print-table">
+                    <thead><tr><th>Job</th><th>Source</th><th>Format</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td><strong>{{ job.public_id }}</strong><small>{{ job.copies }} cop{{ job.copies|pluralize:'y,ies' }}</small></td>
+                        <td>
+                            {% if job.photo %}<strong>{{ job.photo.public_id }}</strong><small>{{ job.photo.original_filename|truncatechars:28 }}</small>{% else %}<span class="muted">Source removed</span>{% endif %}
+                        </td>
+                        <td><strong>{{ job.get_paper_size_display }}</strong><small>{{ job.get_fit_mode_display }}</small></td>
+                        <td><span class="print-status status-{{ job.status|lower }}">{{ job.get_status_display }}</span>{% if job.error_message %}<small class="error-copy">{{ job.error_message }}</small>{% endif %}</td>
+                        <td><strong>{% if job.requested_by %}{{ job.requested_by.username }}{% else %}System{% endif %}</strong><small>{{ job.created_at|date:'d M · g:i A' }}</small></td>
+                        <td>
+                            <div class="print-actions">
+                                {% if job.photo %}<a href="{% url 'printing:job_source' job.public_id %}">Source</a>{% endif %}
+                                <form method="post" action="{% url 'printing:job_action' job.public_id %}">{% csrf_token %}
+                                    {% if job.status == 'QUEUED' or job.status == 'CLAIMED' %}<button name="action" value="cancel">Cancel</button>{% endif %}
+                                    {% if job.status == 'FAILED' or job.status == 'CANCELLED' %}<button name="action" value="requeue">Requeue</button>{% endif %}
+                                    {% if job.status == 'QUEUED' or job.status == 'CLAIMED' or job.status == 'PRINTING' %}<button name="action" value="mark_printed">Mark printed</button><button name="action" value="mark_failed">Mark failed</button>{% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="print-empty"><span>⌁</span><h3>No print jobs yet</h3><p>Choose an approved photo from the queue form to create the first job.</p></div>
+            {% endif %}
+        </section>
+
+        <aside class="print-side-stack">
+            <section class="print-card">
+                <div class="print-card-head compact"><div><p class="print-eyebrow">New Job</p><h2>Queue Photo</h2></div></div>
+                {% if settings_obj.queue_enabled and not settings_obj.queue_paused %}
+                <form method="post" action="{% url 'printing:create_job' %}" class="print-form">
+                    {% csrf_token %}
+                    {% for field in form %}<label><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</label>{% endfor %}
+                    <button class="print-btn primary" type="submit">Add to Queue</button>
+                </form>
+                {% else %}<div class="print-empty compact"><p>Queue is not accepting new jobs.</p></div>{% endif %}
+            </section>
+
+            {% if can_manage_settings %}
+            <section class="print-card">
+                <div class="print-card-head compact"><div><p class="print-eyebrow">Owner Settings</p><h2>Queue Rules</h2></div></div>
+                <form method="post" action="{% url 'printing:settings' %}" class="print-form">
+                    {% csrf_token %}
+                    <label class="check-row">{{ settings_form.queue_enabled }}<span><strong>Enable print queue</strong><small>Authorized users can add jobs.</small></span></label>
+                    <label class="check-row">{{ settings_form.queue_paused }}<span><strong>Pause queue</strong><small>Keep existing jobs but block new ones.</small></span></label>
+                    <label><span>Default copies</span>{{ settings_form.default_copies }}</label>
+                    <label><span>Default paper size</span>{{ settings_form.default_paper_size }}</label>
+                    <button class="print-btn secondary" type="submit">Save Settings</button>
+                </form>
+            </section>
+            {% endif %}
+
+            <section class="print-card note-card">
+                <p class="print-eyebrow">Important</p>
+                <h2>Agent-based printing</h2>
+                <p>Printing stays outside the browser. The trusted Windows Local Print Agent polls this queue, downloads only its assigned source, and prints through the Windows printer driver.</p>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

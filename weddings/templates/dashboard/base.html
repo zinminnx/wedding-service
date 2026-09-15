@@ -10,9 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}EverAfter{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=10.4">
+    <link rel="stylesheet" href="{% static 'dashboard_themes/css/themes.css' %}?v=13.1">
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% if dashboard_visual_theme %}ea-dashboard-themed density-{{ dashboard_layout_density|lower }}{% endif %}"{% if dashboard_visual_theme %} style="--ea-sidebar-bg:{{ dashboard_visual_theme.sidebar_bg }};--ea-sidebar-text:{{ dashboard_visual_theme.sidebar_text }};--ea-content-bg:{{ dashboard_visual_theme.content_bg }};--ea-surface-bg:{{ dashboard_visual_theme.surface_bg }};--ea-accent:{{ dashboard_visual_theme.accent }};--ea-text:{{ dashboard_visual_theme.text_color }};--ea-muted:{{ dashboard_visual_theme.muted_color }};--ea-border:{{ dashboard_visual_theme.border_color }};--ea-radius:{{ dashboard_visual_theme.radius_px }}px;--ea-heading-font:{{ dashboard_visual_theme.heading_font }};--ea-body-font:{{ dashboard_visual_theme.body_font }};"{% endif %}>
 <div class="app-shell">
     <aside class="sidebar">
         <div class="brand">
@@ -63,7 +64,7 @@
 
             {% if access.photo and 'photos' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'photos' %}active{% endif %}" href="{% url 'photos:dashboard' %}">Photos</a>{% endif %}
             {% if access.manage_gifts and 'gifts' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>{% endif %}
-            {% if access.print and 'printing' in enabled_modules %}<a class="nav-item disabled" href="#">Printing</a>{% endif %}
+            {% if access.print and 'printing' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'printing' %}active{% endif %}" href="{% url 'printing:dashboard' %}">Printing</a>{% endif %}
 
             {% if access.manage_staff and 'staffing' in enabled_modules %}
             <a class="nav-item {% if request.resolver_match.namespace == 'staffing' %}active{% endif %}" href="{% url 'staffing:list' %}">Staff & Access</a>
@@ -73,7 +74,16 @@
             <a class="nav-item {% if request.resolver_match.namespace == 'integrations' %}active{% endif %}" href="{% url 'integrations:storage_dashboard' %}">Storage</a>
             {% endif %}
 
-        </nav>
+
+            {% if request.user.is_superuser or wedding.owner_id == request.user.id %}{% if 'archive_restore' in enabled_modules %}
+            <a class="nav-item {% if request.resolver_match.namespace == 'archive_restore' %}active{% endif %}" href="{% url 'archive_restore:dashboard' %}">Archive & Restore</a>
+            {% endif %}{% endif %}
+
+            {% if access.manage_wedding and 'analytics' in enabled_modules %}
+            <a class="nav-item {% if request.resolver_match.namespace == 'audit_analytics' %}active{% endif %}" href="{% url 'audit_analytics:dashboard' %}">Analytics</a>
+            {% endif %}
+                    <a class="nav-item {% if request.resolver_match.namespace == 'dashboard_themes' %}active{% endif %}" href="{% url 'dashboard_themes:gallery' %}">Appearance</a>
+</nav>
 
                     {% if access.planner and 'vendors' in enabled_modules %}
             <a class="nav-item {% if request.resolver_match.namespace == 'vendors' %}active{% endif %}" href="{% url 'vendors:dashboard' %}">Vendors & Quotes</a>
