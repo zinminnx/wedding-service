@@ -5,7 +5,7 @@ from archive_restore.services import verify_snapshot
 
 
 class Command(BaseCommand):
-    help = "Verify EverAfter archive ZIP checksums."
+    help = "Verify EverVow archive ZIP checksums."
 
     def add_arguments(self, parser):
         parser.add_argument("--archive", dest="archive_id", default="")

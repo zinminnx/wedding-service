@@ -101,7 +101,7 @@ def build_ics(request, invitation, settings_obj):
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//EverAfter//Wedding Calendar//EN",
+        "PRODID:-//EverVow//Wedding Calendar//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         "BEGIN:VEVENT",

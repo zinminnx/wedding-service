@@ -26,3 +26,5 @@ staticfiles/
 # Patch / temporary scripts
 apply_patch.ps1
 migrate_legacy_payment_methods.py
+# EverVow generated thumbnail cache
+media_cache/

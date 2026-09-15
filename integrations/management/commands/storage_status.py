@@ -5,7 +5,7 @@ from integrations.models import StoredObject, WeddingStorageSettings
 
 
 class Command(BaseCommand):
-    help = "Show EverAfter storage foundation status without making network calls."
+    help = "Show EverVow storage foundation status without making network calls."
 
     def handle(self, *args, **options):
         config = get_graph_config()

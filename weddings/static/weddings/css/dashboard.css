@@ -21,7 +21,7 @@
 @media(max-width:1100px){.guest-editor-grid{grid-template-columns:1fr}.guest-guide-card{position:static}.guest-mini-stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:760px){.guest-form-grid,.guest-mini-stats{grid-template-columns:1fr}.field-span-2{grid-column:auto}.guest-form-card{padding:20px}.guest-form-actions{justify-content:stretch}.guest-form-actions .btn{width:100%;text-align:center}.guest-page-head .btn,.guest-form-head .btn{width:100%;text-align:center}}
 
-/* EverAfter v10.1 - Four-step Wedding Wizard */
+/* EverVow v10.1 - Four-step Wedding Wizard */
 .wedding-wizard-steps{display:grid;grid-template-columns:minmax(150px,1fr) 42px minmax(150px,1fr) 42px minmax(150px,1fr) 42px minmax(150px,1fr);gap:0;align-items:center;padding:16px 8px;margin:18px 0 22px;background:rgba(255,253,250,.72);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .wedding-wizard-steps .setup-step{appearance:none;border:0;background:transparent;text-align:left;display:flex;align-items:center;gap:12px;padding:0 8px;color:var(--muted);cursor:pointer;font:inherit;min-width:0}.wedding-wizard-steps .setup-step>span{width:42px;height:42px;flex:0 0 42px;border-radius:50%;background:#e9e9e8;color:#53606f;display:grid;place-items:center;font-weight:700;transition:.2s ease}.wedding-wizard-steps .setup-step div{display:flex;flex-direction:column;min-width:0}.wedding-wizard-steps .setup-step strong{font-size:13px;color:var(--text);white-space:nowrap}.wedding-wizard-steps .setup-step small{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap}.wedding-wizard-steps .setup-step.active>span{background:linear-gradient(135deg,#d7a748,#bd8530);color:#fff;box-shadow:0 8px 18px rgba(185,138,63,.24)}.wedding-wizard-steps .setup-step.complete>span{background:#f1e5cd;color:#9a6b25}.wedding-wizard-steps .setup-step.complete>span:after{content:'✓';font-size:14px}.wedding-wizard-steps .setup-step.complete>span{font-size:0}.wedding-wizard-steps .step-line{height:1px;background:#ddd4c8;width:100%}
 .wedding-wizard-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.72fr);gap:20px;align-items:start}.wedding-wizard-main{min-width:0}.wedding-step-panel{padding:30px;min-height:470px}.wedding-step-panel[hidden]{display:none!important}.wedding-step-panel.active{animation:wizardFade .18s ease-out}@keyframes wizardFade{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -35,7 +35,7 @@
 @media(max-width:820px){.wedding-wizard-steps{display:flex;overflow-x:auto;gap:5px;padding:12px 2px}.wedding-wizard-steps .step-line{width:20px;flex:0 0 20px}.wedding-wizard-steps .setup-step{flex:0 0 auto}.wedding-wizard-steps .setup-step>span{width:36px;height:36px;flex-basis:36px}.wedding-wizard-steps .setup-step div{display:none}.wedding-step-panel{padding:20px;min-height:0}.wizard-info-strip,.couple-editor-grid,.timeline-row,.timezone-card,.publish-status-card{grid-template-columns:1fr}.couple-heart{display:none}.wizard-check-grid,.limit-card-grid,.review-grid{grid-template-columns:1fr}.timeline-row{align-items:start}.timeline-copy{padding-left:2px}.wizard-actions{align-items:stretch;flex-direction:column}.wizard-actions-left,.wizard-actions-right{width:100%;flex-wrap:wrap}.wizard-actions .btn{flex:1;text-align:center}.wizard-live-preview{padding:18px}}
 @media(max-width:560px){.wizard-info-strip{grid-template-columns:1fr}.couple-person-card{padding:15px}.couple-display-preview strong{font-size:24px}.wizard-actions-left,.wizard-actions-right{flex-direction:column}.wizard-actions .btn{width:100%}.publish-review{padding:16px}.review-grid{grid-template-columns:1fr 1fr}}
 
-/* EverAfter v10.2 - Wedding Location + Google Maps */
+/* EverVow v10.2 - Wedding Location + Google Maps */
 .venue-card {
     margin: 22px 0;
     padding: 22px;
@@ -69,7 +69,7 @@
     .venue-map-preview { align-items:flex-start; flex-direction:column; }
 }
 
-/* EverAfter v10.3 - Multi Wedding Workspaces */
+/* EverVow v10.3 - Multi Wedding Workspaces */
 .workspace-switcher { position: relative; }
 .workspace-switcher > summary { list-style: none; cursor: pointer; }
 .workspace-switcher > summary::-webkit-details-marker { display: none; }

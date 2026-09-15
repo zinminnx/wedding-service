@@ -72,7 +72,7 @@ class Wedding(models.Model):
     )
 
     # Venue master data. wedding_location is retained as the canonical venue name
-    # for backwards compatibility with earlier EverAfter releases.
+    # for backwards compatibility with earlier EverVow releases.
     wedding_location = models.CharField(max_length=255, blank=True)
     venue_full_address = models.CharField(max_length=500, blank=True)
     venue_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)

@@ -7,8 +7,8 @@ import django.core.validators
 BUILTIN_THEMES = [
     {
         "key": "everafter-classic",
-        "name": "EverAfter Classic",
-        "description": "Original dark navy, ivory and gold EverAfter dashboard.",
+        "name": "EverVow Classic",
+        "description": "Original dark navy, ivory and gold EverVow dashboard.",
         "is_default": True,
         "sort_order": 10,
         "sidebar_bg": "#101827",

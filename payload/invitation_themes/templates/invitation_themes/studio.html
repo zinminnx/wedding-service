@@ -1,6 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
-{% block title %}Invitation Design Studio · EverAfter{% endblock %}
+{% block title %}Invitation Design Studio · EverVow{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'invitation_themes/css/studio.css' %}?v=10.7">{% endblock %}
 {% block content %}
 <div class="page-head theme-page-head">
@@ -11,7 +11,7 @@
     </div>
     <div class="theme-status-card">
         <span>Live theme</span>
-        <strong>{% if design.published_theme %}{{ design.published_theme.name }}{% else %}EverAfter default{% endif %}</strong>
+        <strong>{% if design.published_theme %}{{ design.published_theme.name }}{% else %}EverVow default{% endif %}</strong>
         <small>{% if design.published_at %}Published {{ design.published_at|date:'d M Y · g:i A' }}{% else %}Using system default until first publish{% endif %}</small>
     </div>
 </div>

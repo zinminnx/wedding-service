@@ -1,0 +1,15 @@
+/* EverVow v14.1.4 - wedding invitation cover photo */
+.theme-preview-page .ea-theme-canvas .portrait-card{margin:34px auto 24px;padding:8px;border:1px solid color-mix(in srgb,var(--theme-accent) 35%,transparent);width:82%;max-width:340px}
+.theme-preview-page .ea-theme-canvas .portrait-fallback{height:390px;border-radius:172px 172px 18px 18px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(44,32,22,.35)),linear-gradient(135deg,#d7c7b2,#8fa08b 60%,#5d7060);display:grid;place-items:end center;padding:28px;color:white;font-family:Georgia,serif;font-size:28px}
+.ea-theme-canvas .portrait-card{overflow:hidden}
+.ea-theme-canvas .portrait-card.has-cover-photo{background:transparent}
+.ea-theme-canvas .portrait-image{
+  display:block;width:100%;height:390px;object-fit:cover;object-position:center;
+  border-radius:inherit;background:#e7e1d7;
+}
+.theme-modern-minimal .portrait-image,.theme-black-white-editorial .portrait-image{border-radius:0}
+.theme-photo-hero .portrait-card.has-cover-photo{opacity:.22;padding:0;border:0}
+.theme-photo-hero .portrait-card.has-cover-photo .portrait-image{height:100%;min-height:82vh;border-radius:0}
+.theme-dark-luxury .portrait-image{filter:saturate(.9) contrast(1.03)}
+.theme-black-white-editorial .portrait-image{filter:grayscale(1)}
+@media(max-width:420px){.ea-theme-canvas .portrait-image{height:330px}}

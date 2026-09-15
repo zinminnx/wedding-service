@@ -5,6 +5,7 @@ from pathlib import Path
 from django.core.files.storage import default_storage
 
 from integrations.models import StoredObject, WeddingStorageSettings
+from integrations.image_media import store_image_bytes
 from integrations.storage import delete_stored_object, read_stored_object, store_bytes
 
 from .models import WeddingPhoto, generate_photo_public_id
@@ -32,7 +33,7 @@ def create_photo_with_storage(*, wedding, uploaded, source, status, guest=None, 
     suffix = _safe_suffix(original_name)
     relative_path = f"photos/{public_id}{suffix}"
 
-    record = store_bytes(
+    record = store_image_bytes(
         wedding=wedding,
         relative_path=relative_path,
         content=content,

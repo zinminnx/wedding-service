@@ -1,4 +1,4 @@
-# EverAfter v14.1 Release QA Checklist
+# EverVow v14.1 Release QA Checklist
 
 Use this after all milestone ZIPs are installed and before production deployment.
 

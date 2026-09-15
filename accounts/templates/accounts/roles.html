@@ -1,0 +1,130 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Roles & Access · EverVow{% endblock %}
+
+{% block content %}
+<div class="ea-access-page">
+    <div class="ea-access-head">
+        <div>
+            <p class="eyebrow">Administration</p>
+            <h1>Roles & Access</h1>
+            <p class="lead">Global account roles and wedding-specific access are managed separately.</p>
+        </div>
+        <a class="btn btn-soft" href="{% url 'accounts:profile' %}">Back to Profile</a>
+    </div>
+
+    <div class="ea-role-note">
+        <strong>Two independent layers</strong>
+        <span>Global role controls account-level capability. Wedding role controls access inside the selected wedding workspace.</span>
+    </div>
+
+    {% if can_manage_global %}
+    <section class="panel ea-access-panel">
+        <div class="ea-access-panel-head">
+            <div>
+                <p class="eyebrow">System</p>
+                <h2>Global Roles</h2>
+                <p>Super Admin only. Changing a global role does not change wedding memberships.</p>
+            </div>
+            <span class="ea-scope-badge">Global</span>
+        </div>
+        <div class="ea-access-table-wrap">
+            <table class="ea-access-table">
+                <thead><tr><th>User</th><th>Current Role</th><th>Assign Global Role</th></tr></thead>
+                <tbody>
+                {% for item in global_users %}
+                    <tr>
+                        <td>
+                            <div class="ea-user-cell">
+                                <span class="ea-user-avatar">{{ item.username|slice:':1'|upper }}</span>
+                                <div><strong>{{ item.get_full_name|default:item.username }}</strong><small>@{{ item.username }}{% if item.email %} · {{ item.email }}{% endif %}</small></div>
+                            </div>
+                        </td>
+                        <td><span class="ea-role-pill">{{ item.get_role_display }}</span></td>
+                        <td>
+                            {% if item.is_superuser %}
+                                <span class="ea-locked-role">Super Admin · locked</span>
+                            {% else %}
+                                <form method="post" action="{% url 'accounts:global_role_update' item.pk %}" class="ea-inline-role-form">
+                                    {% csrf_token %}
+                                    <select name="role" class="ea-role-select" aria-label="Global role for {{ item.username }}">
+                                        {% for value,label in global_role_choices %}
+                                            <option value="{{ value }}" {% if item.role == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="ea-role-save">Save</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="empty-state">No users found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if can_manage_wedding %}
+    <section class="panel ea-access-panel">
+        <div class="ea-access-panel-head">
+            <div>
+                <p class="eyebrow">Selected Workspace</p>
+                <h2>Wedding Roles</h2>
+                <p>{{ wedding.name }} · {{ wedding.public_id }}</p>
+            </div>
+            <div class="ea-access-head-actions">
+                <span class="ea-scope-badge soft">Wedding</span>
+                {% if access.manage_staff %}<a class="text-link" href="{% url 'staffing:add' %}">Add staff</a>{% endif %}
+            </div>
+        </div>
+
+        <div class="ea-owner-row">
+            <div class="ea-user-cell">
+                <span class="ea-user-avatar gold">{{ wedding.owner.username|slice:':1'|upper }}</span>
+                <div><strong>{{ wedding.owner.get_full_name|default:wedding.owner.username }}</strong><small>@{{ wedding.owner.username }}</small></div>
+            </div>
+            <span class="ea-role-pill owner">Wedding Owner · locked</span>
+        </div>
+
+        <div class="ea-access-table-wrap">
+            <table class="ea-access-table">
+                <thead><tr><th>Member</th><th>Wedding Role</th><th>Status</th><th>Update</th></tr></thead>
+                <tbody>
+                {% for membership in wedding_memberships %}
+                    <tr>
+                        <td>
+                            <div class="ea-user-cell">
+                                <span class="ea-user-avatar">{{ membership.user.username|slice:':1'|upper }}</span>
+                                <div><strong>{{ membership.user.get_full_name|default:membership.user.username }}</strong><small>@{{ membership.user.username }}</small></div>
+                            </div>
+                        </td>
+                        <td colspan="3">
+                            <form method="post" action="{% url 'accounts:wedding_role_update' membership.pk %}" class="ea-wedding-role-form">
+                                {% csrf_token %}
+                                <select name="role" class="ea-role-select" aria-label="Wedding role for {{ membership.user.username }}">
+                                    {% for value,label in wedding_role_choices %}
+                                        <option value="{{ value }}" {% if membership.role == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="status" class="ea-role-select status" aria-label="Wedding access status for {{ membership.user.username }}">
+                                    {% for value,label in wedding_status_choices %}
+                                        <option value="{{ value }}" {% if membership.status == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="ea-role-save">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="empty-state">No staff memberships yet. The wedding owner still has full access.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

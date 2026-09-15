@@ -1,6 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
-{% block title %}Storage · EverAfter{% endblock %}
+{% block title %}Storage · EverVow{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'integrations/css/storage.css' %}?v=12.0">{% endblock %}
 
 {% block content %}
@@ -36,7 +36,7 @@
     <section class="panel storage-card">
         <div class="storage-card-title"><div><p class="eyebrow">Microsoft Graph</p><h2>OneDrive Connection</h2></div>{% if graph_configured %}<span class="ready-dot">Configured</span>{% else %}<span class="missing-dot">Needs setup</span>{% endif %}</div>
         {% if graph_configured %}
-        <p class="storage-copy">Server credentials are present. Secrets are kept in environment variables and are never rendered in the browser or stored in EverAfter tables.</p>
+        <p class="storage-copy">Server credentials are present. Secrets are kept in environment variables and are never rendered in the browser or stored in EverVow tables.</p>
         {% else %}
         <p class="storage-copy">Add the missing server environment variables before enabling OneDrive.</p>
         <div class="missing-vars">{% for name in graph_missing %}<code>{{ name }}</code>{% endfor %}</div>

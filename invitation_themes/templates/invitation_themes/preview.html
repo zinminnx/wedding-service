@@ -3,10 +3,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ theme.name }} Preview · EverAfter</title>
+<title>{{ theme.name }} Preview · EverVow</title>
 <link rel="stylesheet" href="{% static 'invitation_themes/css/public_themes.css' %}?v=10.6">
 <link rel="stylesheet" href="{% static 'invitation_themes/css/preview.css' %}?v=10.7">
 <link rel="stylesheet" href="{% static 'invitation_themes/css/section_builder_public.css' %}?v=10.7">
+<link rel="stylesheet" href="{% static 'invitation_themes/css/cover_photo_v14_1_4.css' %}?v=14.1.4">
 </head>
 <body class="theme-preview-page">
 <div class="preview-toolbar"><div><strong>{{ theme.name }}</strong><span>{{ theme.get_category_display }} · v{{ theme.version }} · section preview</span></div><div><a href="?device=mobile" class="{% if device == 'mobile' %}active{% endif %}">Mobile</a><a href="?device=tablet" class="{% if device == 'tablet' %}active{% endif %}">Tablet</a><a href="?device=desktop" class="{% if device == 'desktop' %}active{% endif %}">Desktop</a><button type="button" onclick="window.close()">Close</button></div></div>
@@ -16,7 +17,7 @@
 <div class="invite-shell">
 {% for section in preview_sections %}
     {% if section.key == 'hero' %}
-        <header class="invite-hero"><p class="overline">You're invited to the wedding of</p><h1>{{ wedding.groom_name|default:'Aung' }} <span>&</span> {{ wedding.bride_name|default:'May' }}</h1><p class="date-line">Saturday, 26 September 2026</p><div class="portrait-card"><div class="portrait-fallback"><span>A ♥ M</span></div></div><p class="hero-quote">{{ hero_message }}</p></header>
+        <header class="invite-hero"><p class="overline">You're invited to the wedding of</p><h1>{{ wedding.groom_name|default:'Aung' }} <span>&</span> {{ wedding.bride_name|default:'May' }}</h1><p class="date-line">Saturday, 26 September 2026</p><div class="portrait-card{% if draft_has_hero_image %} has-cover-photo{% endif %}">{% if draft_has_hero_image %}<img class="portrait-image" src="{% url 'invitation_themes:hero_file' %}" alt="Wedding cover preview">{% else %}<div class="portrait-fallback"><span>A ♥ M</span></div>{% endif %}</div><p class="hero-quote">{{ hero_message }}</p></header>
     {% endif %}
 {% endfor %}
 <main class="invite-content">

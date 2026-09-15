@@ -14,6 +14,7 @@ HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 class ResolvedInvitationDesign:
     theme: InvitationTheme
     customization: dict
+    hero_image: object = None
     is_fallback: bool = False
 
     @property
@@ -58,19 +59,20 @@ def get_or_create_design(wedding):
 
 
 def resolve_live_design(wedding):
-    design = WeddingInvitationDesign.objects.select_related("published_theme").filter(wedding=wedding).first()
+    design = WeddingInvitationDesign.objects.select_related("published_theme", "published_hero_image").filter(wedding=wedding).first()
     if design and design.published_theme_id:
         # A theme disabled by Main Admin must continue rendering for weddings
         # that had already published it.
         return ResolvedInvitationDesign(
             theme=design.published_theme,
             customization=design.published_customization or {},
+            hero_image=design.published_hero_image,
             is_fallback=False,
         )
     fallback = default_theme()
     if fallback is None:
         fallback = InvitationTheme(
-            name="EverAfter Classic",
+            name="EverVow Classic",
             key="ivory-gold-classic",
             layout_key="classic",
             config={"accent": "#B98A45"},

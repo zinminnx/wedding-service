@@ -10,6 +10,11 @@ from modules.services import module_available
 from staffing.access import get_wedding_for_user
 
 from .forms import InvitationCustomizationForm
+from .hero_storage import (
+    delete_if_unreferenced,
+    hero_image_response,
+    store_hero_upload,
+)
 from .models import InvitationTheme
 from .sections import SECTION_KEYS, SECTION_MAP, normalize_section_config
 from .services import (
@@ -63,6 +68,66 @@ def design_studio(request):
         "section_rows": sections,
         "enabled_section_count": sum(1 for item in sections if item["enabled"] and item["runtime_available"]),
     })
+
+
+
+
+@login_required
+def upload_hero_image(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+    wedding = _design_wedding(request)
+    if wedding is None:
+        return redirect("weddings:dashboard")
+    design = get_or_create_design(wedding)
+    uploaded = request.FILES.get("hero_image")
+    try:
+        record = store_hero_upload(
+            wedding=wedding,
+            design=design,
+            uploaded=uploaded,
+            created_by=request.user,
+        )
+    except (ValueError, OSError, RuntimeError) as exc:
+        messages.error(request, str(exc) or "Cover photo upload failed.")
+        return redirect("invitation_themes:studio")
+
+    old_id = design.draft_hero_image_id
+    design.draft_hero_image = record
+    design.updated_by = request.user
+    design.save(update_fields=["draft_hero_image", "updated_by", "updated_at"])
+    delete_if_unreferenced(old_id)
+    messages.success(request, "Draft cover photo saved. Publish the invitation design to make it live.")
+    return redirect("invitation_themes:studio")
+
+
+@login_required
+def remove_hero_image(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+    wedding = _design_wedding(request)
+    if wedding is None:
+        return redirect("weddings:dashboard")
+    design = get_or_create_design(wedding)
+    old_id = design.draft_hero_image_id
+    design.draft_hero_image = None
+    design.updated_by = request.user
+    design.save(update_fields=["draft_hero_image", "updated_by", "updated_at"])
+    delete_if_unreferenced(old_id)
+    messages.success(request, "Draft cover photo removed. The live invitation is unchanged until you publish.")
+    return redirect("invitation_themes:studio")
+
+
+@login_required
+def draft_hero_image(request):
+    wedding = _design_wedding(request)
+    if wedding is None:
+        raise Http404("Wedding not found")
+    design = get_or_create_design(wedding)
+    record = design.draft_hero_image
+    if not record or record.wedding_id != wedding.id:
+        raise Http404("Cover photo not found")
+    return hero_image_response(record, cache_control="private, no-store")
 
 
 @login_required
@@ -168,13 +233,17 @@ def publish_design(request):
     design.published_theme = design.draft_theme
     design.published_customization = dict(design.draft_customization or {})
     design.published_sections = draft_section_config(design)
+    old_published_hero_id = design.published_hero_image_id
+    design.published_hero_image = design.draft_hero_image
     design.published_at = timezone.now()
     design.updated_by = request.user
     design.save(update_fields=[
         "published_theme", "published_customization", "published_sections",
-        "published_at", "updated_by", "updated_at"
+        "published_hero_image", "published_at", "updated_by", "updated_at"
     ])
-    messages.success(request, f"{design.published_theme.name} and the section layout are now live.")
+    if old_published_hero_id and old_published_hero_id != design.published_hero_image_id:
+        delete_if_unreferenced(old_published_hero_id)
+    messages.success(request, f"{design.published_theme.name}, cover photo, and section layout are now live.")
     return redirect("invitation_themes:studio")
 
 
@@ -213,4 +282,5 @@ def preview_theme(request, theme_key):
         "guest": sample_guest,
         "device": request.GET.get("device", "mobile"),
         "preview_sections": preview_sections,
+        "draft_has_hero_image": bool(design.draft_hero_image_id),
     })

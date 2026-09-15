@@ -51,7 +51,7 @@ def get_graph_config(*, drive_id_override=""):
         client_id=getattr(settings, "GRAPH_CLIENT_ID", "") or "",
         client_secret=getattr(settings, "GRAPH_CLIENT_SECRET", "") or "",
         drive_id=(drive_id_override or getattr(settings, "GRAPH_DRIVE_ID", "") or "").strip(),
-        root_folder=(getattr(settings, "GRAPH_ROOT_FOLDER", "EverAfter") or "EverAfter").strip(" /"),
+        root_folder=(getattr(settings, "GRAPH_ROOT_FOLDER", "EverVow") or "EverVow").strip(" /"),
         timeout=int(getattr(settings, "GRAPH_TIMEOUT_SECONDS", 20)),
     )
 
@@ -128,6 +128,28 @@ class OneDriveGraphClient:
 
     def _root_item(self):
         return self._json_request("GET", f"/drives/{urllib.parse.quote(self.config.drive_id, safe='')}/root")
+
+    def get_item_by_path(self, remote_path):
+        clean_path = str(remote_path or "").replace("\\", "/").strip("/")
+        if not clean_path:
+            return self._root_item()
+        encoded_path = urllib.parse.quote(clean_path, safe="/")
+        return self._json_request(
+            "GET",
+            f"/drives/{urllib.parse.quote(self.config.drive_id, safe='')}/root:/{encoded_path}",
+        )
+
+    def rename_item(self, item_id, new_name):
+        if not item_id:
+            raise GraphAPIError("OneDrive item ID is required.")
+        clean_name = str(new_name or "").strip(" /\\")
+        if not clean_name or "/" in clean_name or "\\" in clean_name:
+            raise GraphAPIError("OneDrive rename requires one folder/file name, not a path.")
+        return self._json_request(
+            "PATCH",
+            f"/drives/{urllib.parse.quote(self.config.drive_id, safe='')}/items/{urllib.parse.quote(item_id, safe='')}",
+            {"name": clean_name},
+        )
 
     def ensure_folder(self, folder_path):
         segments = [part for part in folder_path.replace("\\", "/").split("/") if part]
@@ -207,6 +229,25 @@ class OneDriveGraphClient:
             raise GraphAPIError(f"OneDrive download failed with HTTP {exc.code}.") from exc
         except OSError as exc:
             raise GraphAPIError("OneDrive download could not reach Microsoft Graph.") from exc
+
+    def download_thumbnail_bytes(self, item_id, size="small"):
+        safe_size = size if size in {"small", "medium", "large"} else "small"
+        url = (
+            f"{GRAPH_BASE}/drives/{urllib.parse.quote(self.config.drive_id, safe='')}/items/"
+            f"{urllib.parse.quote(item_id, safe='')}/thumbnails/0/{safe_size}/content"
+        )
+        request = urllib.request.Request(
+            url,
+            method="GET",
+            headers={"Authorization": f"Bearer {self._token()}"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.config.timeout) as response:
+                return response.read()
+        except urllib.error.HTTPError as exc:
+            raise GraphAPIError(f"OneDrive thumbnail download failed with HTTP {exc.code}.") from exc
+        except OSError as exc:
+            raise GraphAPIError("OneDrive thumbnail download could not reach Microsoft Graph.") from exc
 
     def delete_item(self, item_id):
         url = (

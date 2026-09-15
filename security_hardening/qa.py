@@ -180,7 +180,7 @@ def check_apps(report: QAReport) -> None:
     if missing_core:
         report.fail("apps.core", "Required core apps are missing from INSTALLED_APPS.", ", ".join(missing_core))
     else:
-        report.passed("apps.core", "Core EverAfter apps are installed.")
+        report.passed("apps.core", "Core EverVow apps are installed.")
 
     missing_installed = []
     absent = []

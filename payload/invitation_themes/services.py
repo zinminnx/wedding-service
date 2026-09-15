@@ -70,7 +70,7 @@ def resolve_live_design(wedding):
     fallback = default_theme()
     if fallback is None:
         fallback = InvitationTheme(
-            name="EverAfter Classic",
+            name="EverVow Classic",
             key="ivory-gold-classic",
             layout_key="classic",
             config={"accent": "#B98A45"},

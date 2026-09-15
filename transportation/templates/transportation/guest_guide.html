@@ -11,7 +11,7 @@
   <main class="transport-public-shell">
     <a class="transport-back" href="{% url 'invitations:detail' invitation.token %}">← Back to Invitation</a>
     <section class="transport-public-card">
-      <p class="transport-kicker">EverAfter · Guest Travel</p>
+      <p class="transport-kicker">EverVow · Guest Travel</p>
       <h1>Find a Bus</h1>
       <p class="transport-public-lead">Destination: <strong>{{ destination.name|default:'Wedding Venue' }}</strong></p>
       {% if destination.address %}<p class="transport-public-address">{{ destination.address }}</p>{% endif %}

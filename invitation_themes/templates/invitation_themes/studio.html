@@ -1,7 +1,7 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
-{% block title %}Invitation Design Studio · EverAfter{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'invitation_themes/css/studio.css' %}?v=10.7">{% endblock %}
+{% block title %}Invitation Design Studio · EverVow{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'invitation_themes/css/studio.css' %}?v=10.7"><link rel="stylesheet" href="{% static 'invitation_themes/css/studio_cover_v14_1_4.css' %}?v=14.1.4">{% endblock %}
 {% block content %}
 <div class="page-head theme-page-head">
     <div>
@@ -11,7 +11,7 @@
     </div>
     <div class="theme-status-card">
         <span>Live theme</span>
-        <strong>{% if design.published_theme %}{{ design.published_theme.name }}{% else %}EverAfter default{% endif %}</strong>
+        <strong>{% if design.published_theme %}{{ design.published_theme.name }}{% else %}EverVow default{% endif %}</strong>
         <small>{% if design.published_at %}Published {{ design.published_at|date:'d M Y · g:i A' }}{% else %}Using system default until first publish{% endif %}</small>
     </div>
 </div>
@@ -63,6 +63,28 @@
         <p class="eyebrow">Step 3</p>
         <h2>Customize {{ design.draft_theme.name }}</h2>
         <p>Only theme-safe options are exposed here. Theme structure remains controlled by the shared invitation engine.</p>
+        <div class="cover-editor" id="hero-cover">
+            <div class="cover-editor-head">
+                <div><strong>Invitation Cover Photo</strong><small>This photo fills the arch hero frame. Draft changes stay private until Publish.</small></div>
+                {% if design.draft_hero_image_id and design.draft_hero_image_id == design.published_hero_image_id %}<span class="cover-state live">Live</span>{% elif design.draft_hero_image_id %}<span class="cover-state">Draft</span>{% else %}<span class="cover-state">Placeholder</span>{% endif %}
+            </div>
+            {% if design.draft_hero_image_id %}
+                <div class="cover-preview"><img src="{% url 'invitation_themes:hero_file' %}" alt="Draft wedding cover photo"></div>
+            {% else %}
+                <div class="cover-preview empty"><div><strong>{{ wedding.groom_name|slice:':1' }} ♥ {{ wedding.bride_name|slice:':1' }}</strong><small>No cover photo selected yet</small></div></div>
+            {% endif %}
+            <div class="cover-actions">
+                <form method="post" enctype="multipart/form-data" action="{% url 'invitation_themes:hero_upload' %}" class="cover-upload-form">
+                    {% csrf_token %}
+                    <label class="cover-file-field"><span>{% if design.draft_hero_image_id %}Replace cover photo{% else %}Choose cover photo{% endif %}</span><input type="file" name="hero_image" accept="image/jpeg,image/png,image/webp" required></label>
+                    <button class="btn btn-soft" type="submit">{% if design.draft_hero_image_id %}Replace{% else %}Upload{% endif %}</button>
+                </form>
+                {% if design.draft_hero_image_id %}
+                <div class="cover-actions-row"><form method="post" action="{% url 'invitation_themes:hero_remove' %}" onsubmit="return confirm('Remove the draft cover photo? The live invitation stays unchanged until Publish.');">{% csrf_token %}<button class="cover-remove" type="submit">Remove draft photo</button></form></div>
+                {% endif %}
+                <p class="cover-help">JPG, PNG or WebP · maximum 12 MB. Portrait photos work best. Storage follows this wedding's Local / OneDrive setting.</p>
+            </div>
+        </div>
         <form method="post" action="{% url 'invitation_themes:customize' %}" class="customize-form">
             {% csrf_token %}
             {% for field in customize_form %}

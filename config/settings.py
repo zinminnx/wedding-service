@@ -184,21 +184,21 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# EverAfter v12.0 - Microsoft Graph / OneDrive
+# EverVow v12.0 - Microsoft Graph / OneDrive
 GRAPH_TENANT_ID = os.getenv("GRAPH_TENANT_ID", "")
 GRAPH_CLIENT_ID = os.getenv("GRAPH_CLIENT_ID", "")
 GRAPH_CLIENT_SECRET = os.getenv("GRAPH_CLIENT_SECRET", "")
 GRAPH_DRIVE_ID = os.getenv("GRAPH_DRIVE_ID", "")
-GRAPH_ROOT_FOLDER = os.getenv("GRAPH_ROOT_FOLDER", "EverAfter")
+GRAPH_ROOT_FOLDER = os.getenv("GRAPH_ROOT_FOLDER", "EverVow")
 GRAPH_TIMEOUT_SECONDS = int(os.getenv("GRAPH_TIMEOUT_SECONDS", "20"))
 
 
-# EverAfter v13.0 - Archive & Restore
+# EverVow v13.0 - Archive & Restore
 # Safety ceiling for one synchronous archive build. Set 0 to disable the ceiling.
 EVERAFTER_ARCHIVE_MAX_BYTES = int(os.getenv("EVERAFTER_ARCHIVE_MAX_BYTES", str(512 * 1024 * 1024)))
 
 
-# EverAfter v14.0 - Security & Production Hardening
+# EverVow v14.0 - Security & Production Hardening
 # Production hardening is intentionally opt-in. Local development stays unchanged
 # until EVERAFTER_PRODUCTION=True is configured in the deployment environment.
 def _ea_env_bool(name, default=False):
@@ -304,3 +304,12 @@ LOGGING = {
         }
     },
 }
+# EverVow v14.1.1 - Auth flow
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# EverVow v14.1.5 - image originals on OneDrive; VPS caches thumbnails only
+EVERVOW_THUMBNAIL_CACHE_ROOT = Path(os.getenv("EVERVOW_THUMBNAIL_CACHE_ROOT", os.getenv("EVERAFTER_THUMBNAIL_CACHE_ROOT", str(BASE_DIR / "media_cache"))))
+# Backward-compatible alias for installs that still reference the pre-rebrand setting.
+EVERAFTER_THUMBNAIL_CACHE_ROOT = EVERVOW_THUMBNAIL_CACHE_ROOT

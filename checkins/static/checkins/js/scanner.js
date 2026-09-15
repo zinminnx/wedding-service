@@ -61,7 +61,7 @@
         const token = extractToken(rawValue);
         if (!token) {
             setStatus("Wrong QR", "error");
-            hint.textContent = "This QR is not an EverAfter entrance pass. Keep scanning.";
+            hint.textContent = "This QR is not an EverVow entrance pass. Keep scanning.";
             return;
         }
 

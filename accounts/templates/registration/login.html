@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · EverAfter</title>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · EverVow</title>
     <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
 </head>
 <body>
@@ -12,7 +12,7 @@
     </section>
     <section class="login-panel">
         <div class="login-card">
-            <div class="logo-mark">∞</div><h1>EverAfter</h1><p class="kicker">Wedding Management Platform</p>
+            <div class="logo-mark">∞</div><h1>EverVow</h1><p class="kicker">Wedding Management Platform</p>
             <h2>Welcome back</h2><p class="muted">Sign in to your wedding dashboard.</p>
             <form method="post">{% csrf_token %}
                 <label>Email or username{{ form.username }}</label>

@@ -1,6 +1,6 @@
 # Example only. Adjust User, Group, WorkingDirectory and virtualenv paths.
 [Unit]
-Description=EverAfter Django Web
+Description=EverVow Django Web
 After=network.target postgresql.service
 
 [Service]

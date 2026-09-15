@@ -189,7 +189,7 @@ def camera_scanner(request):
     if request.method == "POST":
         token = _extract_qr_token(request.POST.get("qr_value"))
         if not token:
-            messages.error(request, "That QR value is not a valid EverAfter entrance pass.")
+            messages.error(request, "That QR value is not a valid EverVow entrance pass.")
             return redirect("checkins:camera_scanner")
 
         invitation = Invitation.objects.filter(wedding=wedding, qr_token=token).first()

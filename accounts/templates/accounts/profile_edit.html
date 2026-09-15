@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Edit Profile · EverVow{% endblock %}
+
+{% block content %}
+<div class="ea-profile-page ea-profile-form-page">
+    <div class="ea-profile-head">
+        <div>
+            <p class="eyebrow">Account</p>
+            <h1>Edit Profile</h1>
+            <p class="lead">Update your contact details. Username and access roles are managed separately.</p>
+        </div>
+        <a class="text-link" href="{% url 'accounts:profile' %}">Back to profile</a>
+    </div>
+
+    <section class="panel ea-profile-card ea-profile-form-card">
+        <div class="ea-profile-readonly">
+            <div><span>Username</span><strong>{{ request.user.username }}</strong></div>
+            <div><span>Global role</span><strong>{{ global_role_label }}</strong></div>
+            {% if wedding %}<div><span>Wedding role</span><strong>{{ access.role_label }}</strong></div>{% endif %}
+        </div>
+
+        <form method="post" class="ea-profile-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="ea-profile-error">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="ea-profile-form-grid">
+                <label><span>First name</span>{{ form.first_name }}{{ form.first_name.errors }}</label>
+                <label><span>Last name</span>{{ form.last_name }}{{ form.last_name.errors }}</label>
+                <label><span>Email</span>{{ form.email }}{{ form.email.errors }}</label>
+                <label><span>Phone</span>{{ form.phone }}{{ form.phone.errors }}</label>
+            </div>
+            <div class="ea-profile-form-actions">
+                <a class="btn btn-soft" href="{% url 'accounts:profile' %}">Cancel</a>
+                <button class="btn" type="submit">Save Changes</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-/* EverAfter Invitation Theme Engine v10.6
+/* EverVow Invitation Theme Engine v10.6
    One shared invitation engine, ten visual/layout presets. */
 .ea-theme-canvas{--theme-accent:#b98a45;--theme-bg:#fbf7ef;--theme-surface:#fffdf9;--theme-text:#24313c;--theme-muted:#6f7880;background:var(--theme-bg);color:var(--theme-text);min-height:100vh;transition:background .2s ease,color .2s ease}.ea-theme-canvas .invite-shell{background:transparent}.ea-theme-canvas .invite-hero{position:relative;overflow:hidden}.ea-theme-canvas .overline,.ea-theme-canvas .script{color:var(--theme-accent)}.ea-theme-canvas .invite-hero h1 span{color:var(--theme-accent)}.ea-theme-canvas .section{background:var(--theme-surface);border-color:color-mix(in srgb,var(--theme-accent) 22%,transparent)}.ea-theme-canvas .primary-action,.ea-theme-canvas .secondary-action{background:var(--theme-accent);border-color:var(--theme-accent)}.ea-theme-canvas .choice.active{border-color:var(--theme-accent);box-shadow:0 0 0 1px var(--theme-accent)}.ea-theme-canvas .status-pill{background:color-mix(in srgb,var(--theme-accent) 12%,white);color:color-mix(in srgb,var(--theme-accent) 78%,black)}
 

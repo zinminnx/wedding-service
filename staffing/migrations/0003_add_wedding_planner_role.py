@@ -1,4 +1,4 @@
-# EverAfter v11.2.2 repair: add Wedding Planner role choice.
+# EverVow v11.2.2 repair: add Wedding Planner role choice.
 
 from django.db import migrations, models
 

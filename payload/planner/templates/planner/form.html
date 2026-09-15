@@ -1,6 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
-{% block title %}{{ page_title }} · EverAfter{% endblock %}
+{% block title %}{{ page_title }} · EverVow{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'planner/css/planner.css' %}?v=11.2">{% endblock %}
 {% block content %}
 <div class="page-head"><div><p class="eyebrow">Wedding Planner</p><h1>{% if editing %}Edit{% else %}New{% endif %} {{ page_title }}</h1><p class="lead">Keep planning work scoped to {{ wedding.name }}.</p></div><a class="btn btn-soft" href="{% url 'planner:dashboard' %}">Back to Planner</a></div>

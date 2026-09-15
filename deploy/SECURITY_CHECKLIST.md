@@ -1,4 +1,4 @@
-# EverAfter Production Security Checklist
+# EverVow Production Security Checklist
 
 Before setting `EVERAFTER_PRODUCTION=True`:
 
@@ -13,7 +13,7 @@ Before setting `EVERAFTER_PRODUCTION=True`:
 9. Verify `/health/live/` and `/health/ready/` through the public HTTPS hostname.
 10. Keep PostgreSQL and the Django/Gunicorn port private; expose only 80/443 publicly.
 11. Keep OneDrive/Microsoft Graph client secrets server-side only.
-12. Back up PostgreSQL and verify an EverAfter Archive export before destructive retention operations.
+12. Back up PostgreSQL and verify an EverVow Archive export before destructive retention operations.
 13. Keep `EVERAFTER_HSTS_PRELOAD=False` until every subdomain is permanently HTTPS.
 14. Review permissions for `.env`, uploaded media, archive files and service logs.
 15. Update Django/Python/PostgreSQL/security patches on a controlled schedule.

@@ -1,0 +1,94 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'accounts/css/media_v14_1_6.css' %}?v=14.1.6">
+{% endblock %}
+
+{% block title %}My Profile · EverVow{% endblock %}
+
+{% block content %}
+<div class="ea-profile-page">
+    {% if messages %}
+    <div class="ea-flash-stack" aria-live="polite">
+        {% for message in messages %}<div class="ea-flash {{ message.tags|default:'info' }}"><strong>{% if 'error' in message.tags %}Upload problem{% elif 'success' in message.tags %}Saved{% else %}Notice{% endif %}</strong>{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    <div class="ea-profile-head">
+        <div>
+            <p class="eyebrow">Account</p>
+            <h1>My Profile</h1>
+            <p class="lead">Your personal account information and wedding access at a glance.</p>
+        </div>
+        <a class="btn" href="{% url 'accounts:profile_edit' %}">Edit Profile</a>
+    </div>
+
+    <div class="ea-profile-grid">
+        <section class="panel ea-profile-card ea-profile-identity">
+            <div class="ea-profile-avatar">{% if request.user.has_profile_image %}<img src="{% url 'accounts:profile_thumb' %}" alt="{{ request.user.username }} profile photo">{% else %}{{ request.user.username|slice:':1'|upper }}{% endif %}</div>
+            <div>
+                <p class="eyebrow">EverVow Account</p>
+                <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <p class="muted">@{{ request.user.username }}</p>
+            </div>
+            <div class="ea-profile-badges">
+                <span class="ea-profile-badge">{{ global_role_label }}</span>
+                {% if wedding %}<span class="ea-profile-badge soft">{{ access.role_label }}</span>{% endif %}
+            </div>
+        </section>
+
+        <section class="panel ea-profile-card">
+            <div class="panel-head"><h2>Contact Details</h2></div>
+            <div class="ea-profile-facts">
+                <div><span>First name</span><strong>{{ request.user.first_name|default:"—" }}</strong></div>
+                <div><span>Last name</span><strong>{{ request.user.last_name|default:"—" }}</strong></div>
+                <div><span>Email</span><strong>{{ request.user.email|default:"—" }}</strong></div>
+                <div><span>Phone</span><strong>{{ request.user.phone|default:"—" }}</strong></div>
+                <div><span>Username</span><strong>{{ request.user.username }}</strong></div>
+                <div><span>Global role</span><strong>{{ global_role_label }}</strong></div>
+            </div>
+        </section>
+
+        <section class="panel ea-profile-card">
+            <div class="panel-head"><h2>Wedding Access</h2></div>
+            {% if wedding %}
+            <div class="ea-profile-wedding">
+                <span class="switcher-dot"></span>
+                <div>
+                    <strong>{{ wedding.name }}</strong>
+                    <small>{{ access.role_label }} · {{ wedding.public_id }}</small>
+                </div>
+            </div>
+            <div class="ea-profile-facts compact">
+                <div><span>Status</span><strong>{{ wedding.get_status_display }}</strong></div>
+                <div><span>Wedding date</span><strong>{% if wedding.wedding_date %}{{ wedding.wedding_date|date:"d M Y, H:i" }}{% else %}—{% endif %}</strong></div>
+            </div>
+            {% else %}
+            <p class="muted">No active wedding workspace is currently selected.</p>
+            {% endif %}
+        </section>
+
+        <section class="panel ea-profile-card ea-profile-photo-panel">
+            <div class="ea-profile-photo-preview">{% if request.user.has_profile_image %}<img src="{% url 'accounts:profile_thumb' %}" alt="{{ request.user.username }} profile photo">{% else %}{{ request.user.username|slice:':1'|upper }}{% endif %}</div>
+            <div class="ea-profile-photo-controls">
+                <div><p class="eyebrow">Profile Photo</p><h2 style="margin:0 0 6px">Your account image</h2><p>Used in the dashboard account menu. The original is stored in OneDrive; the VPS keeps only a small thumbnail cache.</p></div>
+                <form class="ea-profile-photo-upload" method="post" enctype="multipart/form-data" action="{% url 'accounts:profile_photo_upload' %}">{% csrf_token %}<input type="file" name="profile_image" accept="image/jpeg,image/png,image/webp,image/gif" required><button class="btn btn-soft" type="submit">{% if request.user.has_profile_image %}Replace Photo{% else %}Upload Photo{% endif %}</button></form>
+                {% if request.user.has_profile_image %}<form method="post" action="{% url 'accounts:profile_photo_remove' %}" onsubmit="return confirm('Remove your profile photo?');">{% csrf_token %}<button class="ea-profile-photo-remove" type="submit">Remove profile photo</button></form>{% endif %}
+                <p class="ea-media-policy"><b>Storage policy:</b> JPG, PNG, WebP or GIF · max 20 MB · OneDrive original + VPS thumbnail cache only.</p>
+            </div>
+        </section>
+
+        <section class="panel ea-profile-card">
+            <div class="panel-head"><h2>Account & Appearance</h2></div>
+            <div class="ea-profile-actions">
+                <a href="{% url 'accounts:password_change' %}"><strong>Change Password</strong><span>Update your account password securely.</span></a>
+                <a href="{% url 'dashboard_themes:gallery' %}"><strong>Appearance</strong><span>Choose your dashboard theme and layout density.</span></a>
+                {% if can_manage_roles %}
+                <a class="ea-role-management-action" href="{% url 'accounts:roles' %}"><strong>Roles & Access</strong><span>Assign global account roles and wedding-specific roles separately.</span></a>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

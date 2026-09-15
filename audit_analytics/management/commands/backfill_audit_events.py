@@ -13,7 +13,7 @@ def fingerprint(label, pk):
 
 
 class Command(BaseCommand):
-    help = "Backfill central audit records from existing EverAfter event ledgers without duplicating rows."
+    help = "Backfill central audit records from existing EverVow event ledgers without duplicating rows."
 
     def handle(self, *args, **options):
         created_before = AuditEvent.objects.count()

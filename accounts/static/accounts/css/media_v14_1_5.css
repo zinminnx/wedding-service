@@ -1,0 +1,16 @@
+/* EverVow v14.1.5 - OneDrive-backed media + VPS thumbnail cache UI */
+.account-menu-avatar,.avatar,.workspace-cover-avatar,.workspace-choice-mark{overflow:hidden;position:relative;flex:0 0 auto}
+.account-menu-avatar img,.avatar img,.workspace-cover-avatar img,.workspace-choice-mark img,.ea-profile-avatar img{width:100%;height:100%;display:block;object-fit:cover}
+.account-menu-avatar .media-fallback,.avatar .media-fallback,.workspace-cover-avatar .media-fallback,.workspace-choice-mark .media-fallback{width:100%;height:100%;display:grid;place-items:center}
+.workspace-cover-avatar{width:28px;height:28px;border-radius:50%;background:#efe4cf;border:1px solid rgba(185,138,63,.25)}
+.workspace-choice-mark{width:34px!important;height:34px!important;border-radius:50%;background:#efe4cf!important;color:#765727!important;display:grid!important;place-items:center!important;font-size:11px!important;font-weight:800}
+.workspace-choice-mark img{position:absolute;inset:0}
+.ea-profile-avatar{overflow:hidden;padding:0}
+.ea-profile-photo-panel{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ea-profile-photo-preview{width:92px;height:92px;border-radius:50%;overflow:hidden;background:linear-gradient(145deg,#ead4a6,#b98a3f);display:grid;place-items:center;color:#152231;font:700 34px Georgia,serif;border:4px solid rgba(255,255,255,.75);box-shadow:0 10px 28px rgba(21,34,49,.12)}
+.ea-profile-photo-preview img{width:100%;height:100%;object-fit:cover}
+.ea-profile-photo-controls{display:grid;gap:10px}.ea-profile-photo-controls p{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
+.ea-profile-photo-upload{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.ea-profile-photo-upload input[type=file]{max-width:320px;font-size:12px}
+.ea-profile-photo-remove{border:0;background:transparent;color:#9a5149;font:inherit;font-size:12px;font-weight:800;cursor:pointer;padding:0}
+.ea-media-policy{font-size:10px!important;color:var(--muted)!important}.ea-media-policy b{color:#6f572f}
+@media(max-width:700px){.ea-profile-photo-panel{grid-template-columns:1fr}.ea-profile-photo-preview{width:82px;height:82px}.workspace-cover-avatar{width:25px;height:25px}}

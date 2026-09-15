@@ -1,4 +1,4 @@
-# Generated for EverAfter v10 guest photo workflow.
+# Generated for EverVow v10 guest photo workflow.
 
 import django.db.models.deletion
 import photos.models

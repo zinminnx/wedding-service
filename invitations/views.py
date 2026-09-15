@@ -10,6 +10,7 @@ from django.utils import timezone
 from guests.models import Guest
 from rsvp.models import RSVP
 from gifts.models import GiftPaymentMethod, GiftSettings, GuestGiftDeclaration
+from invitation_themes.hero_storage import hero_image_response, published_hero_for_wedding
 from staffing.access import (
     PERM_MANAGE_INVITATIONS,
     PERM_VIEW_INVITATIONS,
@@ -161,6 +162,22 @@ def invitation_detail(request, token):
             "gift_error": gift_error,
         },
     )
+
+
+
+def invitation_hero_image(request, token):
+    invitation = (
+        Invitation.objects.select_related("wedding")
+        .filter(token=token)
+        .first()
+    )
+    if invitation is None or invitation.status in [Invitation.Status.REVOKED, Invitation.Status.EXPIRED]:
+        raise Http404("Invitation unavailable")
+    record = published_hero_for_wedding(invitation.wedding)
+    if record is None:
+        raise Http404("Cover photo not found")
+    return hero_image_response(record, cache_control="private, max-age=3600")
+
 
 def _owned_invitation(user, invitation_id):
     wedding = get_wedding_for_user(user, PERM_MANAGE_INVITATIONS)

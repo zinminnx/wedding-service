@@ -103,6 +103,22 @@ class WeddingInvitationDesign(models.Model):
     published_customization = models.JSONField(default=dict, blank=True)
     draft_sections = models.JSONField(default=list, blank=True)
     published_sections = models.JSONField(default=list, blank=True)
+    # v14.1.4 - wedding cover photo follows the same draft -> publish workflow
+    # as theme customization. StoredObject keeps Local/OneDrive storage abstracted.
+    draft_hero_image = models.ForeignKey(
+        "integrations.StoredObject",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    published_hero_image = models.ForeignKey(
+        "integrations.StoredObject",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
     published_at = models.DateTimeField(null=True, blank=True)
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

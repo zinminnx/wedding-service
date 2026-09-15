@@ -1,4 +1,4 @@
-"""Canonical invitation section registry for EverAfter.
+"""Canonical invitation section registry for EverVow.
 
 The registry is intentionally code-owned. Wedding owners store only section keys,
 enabled state and order. Theme markup remains shared and controlled by the platform.
@@ -46,7 +46,7 @@ SECTION_DEFINITIONS = (
     {
         "key": "maps",
         "label": "Maps",
-        "description": "A direct venue map link using the wedding location already stored in EverAfter.",
+        "description": "A direct venue map link using the wedding location already stored in EverVow.",
         "template": "invitation_themes/sections/maps.html",
         "default_enabled": False,
     },

@@ -5,22 +5,39 @@
   <p class="script">Save the Date</p>
   <h2>Add our wedding to your calendar</h2>
   <p class="ea-event-copy">Keep the date close. Imported reminders are handled by your calendar app.</p>
-  <div class="ea-action-grid">
-    {% if google_calendar_url %}<a class="ea-event-action" href="{{ google_calendar_url }}" target="_blank" rel="noopener">Google Calendar</a>{% endif %}
-    <a class="ea-event-action" href="{% url 'event_tools:calendar_ics' invitation.token %}">Apple / Huawei / ICS</a>
+  <div class="ea-action-grid ea-calendar-actions">
+    {% if google_calendar_url %}<a class="ea-event-action" href="{{ google_calendar_url }}" target="_blank" rel="noopener"><span class="ea-action-icon" aria-hidden="true">G</span>Google Calendar</a>{% endif %}
+    <a class="ea-event-action" href="{% url 'event_tools:calendar_ics' invitation.token %}"><span class="ea-action-icon" aria-hidden="true">▣</span>Apple / Huawei / ICS</a>
   </div>
 </section>
 {% endif %}
 
 {% if event_settings.venue_enabled %}
   {% if wedding.wedding_location or wedding.venue_full_address %}
-  <section class="section ea-event-section" id="venue">
+  <section class="section ea-event-section ea-venue-section" id="venue">
     <p class="script">Venue</p>
     <h2>{{ wedding.wedding_location|default:'Wedding Venue' }}</h2>
     {% if event_settings.show_address and wedding.venue_full_address %}<p class="ea-venue-address">{{ wedding.venue_full_address }}</p>{% endif %}
     {% if event_settings.show_landmark and wedding.venue_landmark %}<p class="ea-venue-meta"><strong>Landmark:</strong> {{ wedding.venue_landmark }}</p>{% endif %}
     {% if event_settings.show_location_note and wedding.venue_location_note %}<p class="ea-venue-meta">{{ wedding.venue_location_note }}</p>{% endif %}
-    <div class="ea-action-grid">
+
+    <div class="ea-map-preview-wrap">
+      {% if google_maps_url %}<a class="ea-map-preview-link" href="{{ google_maps_url }}" target="_blank" rel="noopener" aria-label="Open {{ wedding.wedding_location|default:'wedding venue' }} in maps">{% endif %}
+      <div class="ea-map-preview" role="img" aria-label="Map preview for {{ wedding.wedding_location|default:'wedding venue' }}">
+        <span class="ea-map-road road-one"></span>
+        <span class="ea-map-road road-two"></span>
+        <span class="ea-map-road road-three"></span>
+        <span class="ea-map-block block-one"></span>
+        <span class="ea-map-block block-two"></span>
+        <span class="ea-map-block block-three"></span>
+        <span class="ea-map-water"></span>
+        <span class="ea-map-pin" aria-hidden="true"><i></i></span>
+        <span class="ea-map-label">{{ wedding.wedding_location|default:'Wedding Venue' }}</span>
+      </div>
+      {% if google_maps_url %}</a>{% endif %}
+    </div>
+
+    <div class="ea-action-grid ea-map-actions">
       {% if event_settings.smart_map_enabled and google_maps_url %}<a class="ea-event-action ea-smart-map" href="{{ google_maps_url }}" data-google="{{ google_maps_url }}" data-apple="{{ apple_maps_url }}" target="_blank" rel="noopener">Open in Maps</a>{% endif %}
       {% if event_settings.show_google_maps and google_maps_url %}<a class="ea-event-action secondary" href="{{ google_maps_url }}" target="_blank" rel="noopener">Google Maps</a>{% endif %}
       {% if event_settings.show_apple_maps and apple_maps_url %}<a class="ea-event-action secondary" href="{{ apple_maps_url }}" target="_blank" rel="noopener">Apple Maps</a>{% endif %}

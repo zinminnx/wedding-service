@@ -8,9 +8,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}EverAfter{% endblock %}</title>
+    <title>{% block title %}EverVow{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'weddings/css/dashboard.css' %}?v=10.4">
     <link rel="stylesheet" href="{% static 'dashboard_themes/css/themes.css' %}?v=13.1">
+    <link rel="stylesheet" href="{% static 'accounts/css/profile.css' %}?v=14.1.1">
+    <link rel="stylesheet" href="{% static 'accounts/css/access_roles.css' %}?v=14.1.2">
+    <link rel="stylesheet" href="{% static 'accounts/css/media_v14_1_5.css' %}?v=14.1.6">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% if dashboard_visual_theme %}ea-dashboard-themed density-{{ dashboard_layout_density|lower }}{% endif %}"{% if dashboard_visual_theme %} style="--ea-sidebar-bg:{{ dashboard_visual_theme.sidebar_bg }};--ea-sidebar-text:{{ dashboard_visual_theme.sidebar_text }};--ea-content-bg:{{ dashboard_visual_theme.content_bg }};--ea-surface-bg:{{ dashboard_visual_theme.surface_bg }};--ea-accent:{{ dashboard_visual_theme.accent }};--ea-text:{{ dashboard_visual_theme.text_color }};--ea-muted:{{ dashboard_visual_theme.muted_color }};--ea-border:{{ dashboard_visual_theme.border_color }};--ea-radius:{{ dashboard_visual_theme.radius_px }}px;--ea-heading-font:{{ dashboard_visual_theme.heading_font }};--ea-body-font:{{ dashboard_visual_theme.body_font }};"{% endif %}>
@@ -18,86 +21,67 @@
     <aside class="sidebar">
         <div class="brand">
             <div class="brand-mark">&infin;</div>
-            <div><div class="brand-name">EverAfter</div><div class="brand-sub">Wedding Service</div></div>
+            <div><div class="brand-name">EverVow</div><div class="brand-sub">Wedding Service</div></div>
         </div>
-
         <nav class="nav-list">
-            <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'weddings' %}active{% endif %}" href="{% url 'weddings:dashboard' %}">Dashboard</a>
+            <div class="nav-section">
+                <div class="nav-section-label">Overview</div>
+                <a class="nav-item {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'weddings' %}active{% endif %}" href="{% url 'weddings:dashboard' %}">Dashboard</a>
+                {% if access.manage_wedding or access.can_create_wedding %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'list' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'create' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'weddings:list' %}">My Weddings</a>
+                {% endif %}
+            </div>
 
-            {% if access.manage_wedding or access.can_create_wedding %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'list' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'create' or request.resolver_match.namespace == 'weddings' and request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'weddings:list' %}">My Weddings</a>
-            {% endif %}
+            <div class="nav-section">
+                <div class="nav-section-label">Guest Experience</div>
+                {% if access.view_guests %}<a class="nav-item {% if request.resolver_match.namespace == 'guests' %}active{% endif %}" href="{% url 'guests:list' %}">Guests</a>{% endif %}
+                {% if access.view_invitations %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'invitations' and request.resolver_match.url_name != 'detail' %}active{% endif %}" href="{% url 'invitations:list' %}">Invitations</a>
+                <a class="nav-item {% if request.resolver_match.namespace == 'event_tools' %}active{% endif %}" href="{% url 'event_tools:settings' %}">Calendar & Venue</a>
+                {% if access.manage_wedding and 'transportation' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'transportation' %}active{% endif %}" href="{% url 'transportation:settings' %}">Transportation</a>{% endif %}
+                {% endif %}
+                {% if can_manage_modules and 'invitation_themes' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'invitation_themes' %}active{% endif %}" href="{% url 'invitation_themes:studio' %}">Design Studio</a>{% endif %}
+                {% if access.view_rsvp and 'rsvp' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'rsvp' %}active{% endif %}" href="{% url 'rsvp:list' %}">RSVP</a>{% endif %}
+            </div>
 
-            {% if can_manage_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'modules' %}active{% endif %}" href="{% url 'modules:wedding_modules' %}">Modules</a>
-            {% endif %}
+            <div class="nav-section">
+                <div class="nav-section-label">Event Operations</div>
+                {% if access.check_in and 'checkins' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'checkins' %}active{% endif %}" href="{% url 'checkins:dashboard' %}">Check-in</a>{% endif %}
+                {% if access.photo and 'photos' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'photos' %}active{% endif %}" href="{% url 'photos:dashboard' %}">Photos</a>{% endif %}
+                {% if access.manage_gifts and 'gifts' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>{% endif %}
+                {% if access.print and 'printing' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'printing' %}active{% endif %}" href="{% url 'printing:dashboard' %}">Printing</a>{% endif %}
+            </div>
 
-            {% if access.view_guests %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'guests' %}active{% endif %}" href="{% url 'guests:list' %}">Guests</a>
-            {% endif %}
+            <div class="nav-section">
+                <div class="nav-section-label">Planning & Finance</div>
+                {% if access.manage_wedding and 'budgeting' in enabled_modules %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'budgeting' %}active{% endif %}" href="{% url 'budgeting:dashboard' %}">Budget</a>
+                {% elif access.planner and 'budgeting' in enabled_modules %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'budgeting' %}active{% endif %}" href="{% url 'budgeting:dashboard' %}">Budget</a>
+                {% endif %}
+                {% if access.planner and 'planner' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'planner' %}active{% endif %}" href="{% url 'planner:dashboard' %}">Planner</a>{% endif %}
+                {% if access.planner and 'vendors' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'vendors' %}active{% endif %}" href="{% url 'vendors:dashboard' %}">Vendors & Quotes</a>{% endif %}
+                {% if access.manage_wedding or access.planner %}{% if 'budgeting' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'financial_docs' %}active{% endif %}" href="{% url 'financial_docs:dashboard' %}">Financial Docs</a>{% endif %}{% endif %}
+            </div>
 
-            {% if access.view_invitations %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'invitations' and request.resolver_match.url_name != 'detail' %}active{% endif %}" href="{% url 'invitations:list' %}">Invitations</a>
-            <a class="nav-item {% if request.resolver_match.namespace == 'event_tools' %}active{% endif %}" href="{% url 'event_tools:settings' %}">Calendar & Venue</a>
-            {% if access.manage_wedding and 'transportation' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'transportation' %}active{% endif %}" href="{% url 'transportation:settings' %}">Transportation</a>
-            {% if access.manage_wedding and 'budgeting' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'budgeting' %}active{% endif %}" href="{% url 'budgeting:dashboard' %}">Budget</a>
-            {% if access.planner and 'planner' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'planner' %}active{% endif %}" href="{% url 'planner:dashboard' %}">Planner</a>
-            {% endif %}
-            {% endif %}
-            {% endif %}
-            {% endif %}
+            <div class="nav-section">
+                <div class="nav-section-label">Administration</div>
+                {% if access.manage_staff and 'staffing' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'staffing' %}active{% endif %}" href="{% url 'staffing:list' %}">Team & Access</a>{% endif %}
+                {% if request.user.is_superuser %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'roles' %}active{% endif %}" href="{% url 'accounts:roles' %}">Roles & Access</a>
+                {% elif wedding.owner_id == request.user.id %}
+                <a class="nav-item {% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'roles' %}active{% endif %}" href="{% url 'accounts:roles' %}">Roles & Access</a>
+                {% endif %}
+                {% if can_manage_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'modules' %}active{% endif %}" href="{% url 'modules:wedding_modules' %}">Modules</a>{% endif %}
+                {% if access.manage_wedding and 'onedrive' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'integrations' %}active{% endif %}" href="{% url 'integrations:storage_dashboard' %}">Storage</a>{% endif %}
+                {% if request.user.is_superuser or wedding.owner_id == request.user.id %}{% if 'archive_restore' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'archive_restore' %}active{% endif %}" href="{% url 'archive_restore:dashboard' %}">Archive & Restore</a>{% endif %}{% endif %}
+                {% if access.manage_wedding and 'analytics' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'audit_analytics' %}active{% endif %}" href="{% url 'audit_analytics:dashboard' %}">Analytics</a>{% endif %}
+            </div>
+        </nav>
 
-            {% if can_manage_modules and 'invitation_themes' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'invitation_themes' %}active{% endif %}" href="{% url 'invitation_themes:studio' %}">Design Studio</a>
-            {% endif %}
-
-            {% if access.view_rsvp and 'rsvp' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'rsvp' %}active{% endif %}" href="{% url 'rsvp:list' %}">RSVP</a>
-            {% endif %}
-
-            {% if access.check_in and 'checkins' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'checkins' %}active{% endif %}" href="{% url 'checkins:dashboard' %}">Check-in</a>
-            {% endif %}
-
-            {% if access.photo and 'photos' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'photos' %}active{% endif %}" href="{% url 'photos:dashboard' %}">Photos</a>{% endif %}
-            {% if access.manage_gifts and 'gifts' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'gifts' %}active{% endif %}" href="{% url 'gifts:dashboard' %}">Gifts</a>{% endif %}
-            {% if access.print and 'printing' in enabled_modules %}<a class="nav-item {% if request.resolver_match.namespace == 'printing' %}active{% endif %}" href="{% url 'printing:dashboard' %}">Printing</a>{% endif %}
-
-            {% if access.manage_staff and 'staffing' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'staffing' %}active{% endif %}" href="{% url 'staffing:list' %}">Staff & Access</a>
-            {% endif %}
-
-            {% if access.manage_wedding and 'onedrive' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'integrations' %}active{% endif %}" href="{% url 'integrations:storage_dashboard' %}">Storage</a>
-            {% endif %}
-
-
-            {% if request.user.is_superuser or wedding.owner_id == request.user.id %}{% if 'archive_restore' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'archive_restore' %}active{% endif %}" href="{% url 'archive_restore:dashboard' %}">Archive & Restore</a>
-            {% endif %}{% endif %}
-
-            {% if access.manage_wedding and 'analytics' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'audit_analytics' %}active{% endif %}" href="{% url 'audit_analytics:dashboard' %}">Analytics</a>
-            {% endif %}
-                    <a class="nav-item {% if request.resolver_match.namespace == 'dashboard_themes' %}active{% endif %}" href="{% url 'dashboard_themes:gallery' %}">Appearance</a>
-</nav>
-
-                    {% if access.planner and 'vendors' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'vendors' %}active{% endif %}" href="{% url 'vendors:dashboard' %}">Vendors & Quotes</a>
-            {% endif %}
-            {# v11.4 planner finance navigation #}
-            {% if access.planner and not access.manage_wedding %}{% if 'budgeting' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'budgeting' %}active{% endif %}" href="{% url 'budgeting:dashboard' %}">Budget</a>
-            {% endif %}{% endif %}
-            {% if access.manage_wedding or access.planner %}{% if 'budgeting' in enabled_modules %}
-            <a class="nav-item {% if request.resolver_match.namespace == 'financial_docs' %}active{% endif %}" href="{% url 'financial_docs:dashboard' %}">Financial Docs</a>
-            {% endif %}{% endif %}
 <div class="sidebar-quote"><span>Beautiful</span><span>Moments</span><span>Last Forever</span></div>
         <div class="sidebar-footer">
-            <div class="avatar">{{ request.user.username|slice:':1'|upper }}</div>
+            <div class="avatar" data-media="sidebar-profile-thumb-v14-1-5">{% if request.user.has_profile_image %}<img src="{% url 'accounts:profile_thumb' %}" alt=""><span class="media-fallback" hidden>{{ request.user.username|slice:':1'|upper }}</span>{% else %}<span class="media-fallback">{{ request.user.username|slice:':1'|upper }}</span>{% endif %}</div>
             <div class="sidebar-user"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><span>{{ access.role_label }}</span></div>
         </div>
     </aside>
@@ -109,7 +93,7 @@
                 {% if wedding %}
                     <details class="workspace-switcher">
                         <summary class="wedding-switcher">
-                            <span class="switcher-dot"></span>
+                            <span class="workspace-cover-avatar"><img src="{% url 'accounts:wedding_cover_thumb' wedding.public_id %}" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="media-fallback" hidden>{{ wedding.name|slice:':1'|upper }}</span></span>
                             <div><small>{{ access.role_label }}</small><strong>{{ wedding.name }}</strong></div>
                             <span class="switcher-chevron">&#8964;</span>
                         </summary>
@@ -122,14 +106,14 @@
                                 {% for item in wedding_choices %}
                                     {% if item.pk == wedding.pk %}
                                     <div class="workspace-choice current">
-                                        <span class="workspace-choice-mark">âœ“</span>
+                                        <span class="workspace-choice-mark" data-media="workspace-row-cover-v14-1-5"><img src="{% url 'accounts:wedding_cover_thumb' item.public_id %}" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="media-fallback" hidden>{{ item.name|slice:':1'|upper }}</span></span>
                                         <div><strong>{{ item.name }}</strong><small>{{ item.get_status_display }}{% if item.wedding_date %} Â· {{ item.wedding_date|date:'d M Y' }}{% endif %}</small></div>
                                     </div>
                                     {% else %}
                                     <form method="post" action="{% url 'weddings:switch' item.public_id %}">
                                         {% csrf_token %}
                                         <button class="workspace-choice" type="submit">
-                                            <span class="workspace-choice-mark">â—‡</span>
+                                            <span class="workspace-choice-mark" data-media="workspace-row-cover-v14-1-5"><img src="{% url 'accounts:wedding_cover_thumb' item.public_id %}" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="media-fallback" hidden>{{ item.name|slice:':1'|upper }}</span></span>
                                             <div><strong>{{ item.name }}</strong><small>{{ item.get_status_display }}{% if item.wedding_date %} Â· {{ item.wedding_date|date:'d M Y' }}{% endif %}</small></div>
                                         </button>
                                     </form>
@@ -144,7 +128,24 @@
                 {% elif access.can_create_wedding %}
                     <a class="workspace-create-top" href="{% url 'weddings:create' %}">ï¼‹ Create wedding</a>
                 {% endif %}
-                <a class="text-link" href="{% url 'accounts:logout' %}">Sign out</a>
+                <details class="account-menu">
+                    <summary aria-label="Account menu">
+                        <span class="account-menu-avatar">{% if request.user.has_profile_image %}<img src="{% url 'accounts:profile_thumb' %}" alt=""><span class="media-fallback" hidden>{{ request.user.username|slice:':1'|upper }}</span>{% else %}<span class="media-fallback">{{ request.user.username|slice:':1'|upper }}</span>{% endif %}</span>
+                        <span class="account-menu-label"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><small>Account</small></span>
+                        <span aria-hidden="true">&#8964;</span>
+                    </summary>
+                    <div class="account-menu-popover">
+                        <a href="{% url 'accounts:profile' %}">My Profile</a>
+                        <a href="{% url 'dashboard_themes:gallery' %}">Appearance</a>
+                        {% if request.user.is_superuser %}<a class="account-menu-role-link" href="{% url 'accounts:roles' %}">Roles & Access</a>{% elif wedding.owner_id == request.user.id %}<a class="account-menu-role-link" href="{% url 'accounts:roles' %}">Roles & Access</a>{% endif %}
+                        <a href="{% url 'accounts:password_change' %}">Change Password</a>
+                        <div class="account-menu-divider"></div>
+                        <form method="post" action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">Sign out</button>
+                        </form>
+                    </div>
+                </details>
             </div>
         </header>
 

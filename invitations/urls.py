@@ -6,6 +6,7 @@ app_name = "invitations"
 
 urlpatterns = [
     path("i/<str:token>/", views.invitation_detail, name="detail"),
+    path("i/<str:token>/hero/", views.invitation_hero_image, name="hero_image"),
     path("dashboard/invitations/", views.invitation_list, name="list"),
     path(
         "dashboard/invitations/generate-missing/",

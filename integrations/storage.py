@@ -30,7 +30,7 @@ def wedding_remote_root(wedding, settings_obj=None):
     if configured_root:
         return "/".join(safe_segment(p) for p in configured_root.replace("\\", "/").split("/") if p)
     graph_root = get_graph_config(drive_id_override=settings_obj.onedrive_drive_id).root_folder
-    return "/".join(filter(None, [safe_segment(graph_root, "EverAfter"), safe_segment(wedding.public_id, "wedding")]))
+    return "/".join(filter(None, [safe_segment(graph_root, "EverVow"), safe_segment(wedding.public_id, "wedding")]))
 
 
 @dataclass

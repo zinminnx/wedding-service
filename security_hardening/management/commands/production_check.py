@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    help = "Validate EverAfter production security settings without creating a test database."
+    help = "Validate EverVow production security settings without creating a test database."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -60,4 +60,4 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.ERROR(f"ERROR: {item}"))
             raise CommandError(f"Production security check failed with {len(failures)} error(s).")
 
-        self.stdout.write(self.style.SUCCESS("EverAfter production security check: PASS"))
+        self.stdout.write(self.style.SUCCESS("EverVow production security check: PASS"))

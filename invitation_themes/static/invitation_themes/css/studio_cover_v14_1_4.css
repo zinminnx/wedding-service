@@ -1,0 +1,17 @@
+/* EverVow v14.1.4 - Design Studio cover photo editor */
+.cover-editor{margin:18px 0 22px;padding:16px;border:1px solid var(--line,#e8e1d6);border-radius:14px;background:#fbf8f3}
+.cover-editor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:13px}
+.cover-editor-head strong{display:block;font:500 19px Georgia,serif;color:var(--text,#1b2430)}
+.cover-editor-head small{display:block;margin-top:4px;color:var(--muted,#7c8189);font-size:10px;line-height:1.45}
+.cover-state{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:6px 9px;border-radius:999px;background:#efe6d7;color:#805c25;white-space:nowrap}
+.cover-state.live{background:#e7f2e9;color:#3e744b}
+.cover-preview{position:relative;overflow:hidden;aspect-ratio:4/5;border-radius:22px 22px 10px 10px;border:1px solid #e2d8c9;background:linear-gradient(160deg,#e7dfd0,#a7b09e);max-width:230px;margin:0 auto 14px;box-shadow:0 10px 28px rgba(31,39,38,.09)}
+.cover-preview img{display:block;width:100%;height:100%;object-fit:cover}
+.cover-preview.empty{display:grid;place-items:center;text-align:center;padding:20px;color:#fff}
+.cover-preview.empty strong{font:500 25px Georgia,serif}.cover-preview.empty small{display:block;margin-top:7px;font-size:10px;opacity:.82}
+.cover-actions{display:grid;gap:10px}
+.cover-upload-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}
+.cover-file-field{display:flex;flex-direction:column;gap:6px;min-width:0}.cover-file-field span{font-size:10px;font-weight:800}.cover-file-field input{width:100%;font-size:11px;border:1px solid #dfd7cb;border-radius:10px;background:#fff;padding:9px}
+.cover-actions-row{display:flex;gap:8px;flex-wrap:wrap}.cover-actions-row form{margin:0}.cover-remove{border:1px solid #e2c3bb;background:#fff7f5;color:#9a5547;border-radius:10px;padding:10px 13px;font-weight:800;cursor:pointer}
+.cover-help{font-size:10px;color:var(--muted,#7c8189);line-height:1.5;margin:0}
+@media(max-width:620px){.cover-upload-form{grid-template-columns:1fr}.cover-upload-form .btn{width:100%}}

@@ -46,7 +46,7 @@ DEPENDENCIES = {
 
 
 class Command(BaseCommand):
-    help = "Create/update EverAfter module registry and the backward-compatible default package."
+    help = "Create/update EverVow module registry and the backward-compatible default package."
 
     def handle(self, *args, **options):
         registry = {}

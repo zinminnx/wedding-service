@@ -1,4 +1,4 @@
-# EverAfter v11.2: add Wedding Planner staff membership role.
+# EverVow v11.2: add Wedding Planner staff membership role.
 
 from django.db import migrations, models
 

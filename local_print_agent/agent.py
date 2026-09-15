@@ -152,7 +152,7 @@ def print_image_windows(path: Path, printer_name: str, copies: int, fit_mode: st
         dc.DeleteDC()
 
 
-class EverAfterAgent:
+class EverVowAgent:
     def __init__(self, base_url: str, token: str, printer_name: str, poll_seconds: float, timeout: float, dry_run: bool):
         self.requests = require_runtime_packages()
         self.base_url = base_url.rstrip("/") + "/"
@@ -165,7 +165,7 @@ class EverAfterAgent:
         self.session = self.requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {token}",
-            "User-Agent": f"EverAfter-Print-Agent/{AGENT_VERSION}",
+            "User-Agent": f"EverVow-Print-Agent/{AGENT_VERSION}",
         })
 
     def url(self, path: str) -> str:
@@ -255,7 +255,7 @@ class EverAfterAgent:
         return True
 
     def run_forever(self):
-        print(f"EverAfter Local Print Agent {AGENT_VERSION}")
+        print(f"EverVow Local Print Agent {AGENT_VERSION}")
         print(f"Server:  {self.base_url}")
         print(f"Printer: {self.printer_name or '<Windows default printer>'}")
         print(f"Host:    {self.hostname}")
@@ -277,7 +277,7 @@ class EverAfterAgent:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="EverAfter Windows Local Print Agent")
+    parser = argparse.ArgumentParser(description="EverVow Windows Local Print Agent")
     parser.add_argument("--config", default=str(Path(__file__).resolve().parent / "agent.env"))
     parser.add_argument("--once", action="store_true", help="Poll once, process at most one job, then exit.")
     parser.add_argument("--dry-run", action="store_true", help="Download/claim jobs but save them locally instead of printing.")
@@ -292,7 +292,7 @@ def main() -> int:
     token = os.getenv("EVERAFTER_AGENT_TOKEN", "").strip()
     printer_name = os.getenv("EVERAFTER_PRINTER_NAME", "").strip()
     if not token:
-        print("EVERAFTER_AGENT_TOKEN is missing. Create a Local Print Agent in EverAfter and put the token in agent.env.", file=sys.stderr)
+        print("EVERAFTER_AGENT_TOKEN is missing. Create a Local Print Agent in EverVow and put the token in agent.env.", file=sys.stderr)
         return 2
 
     try:
@@ -302,7 +302,7 @@ def main() -> int:
         print("Polling/timeout values in agent.env must be numbers.", file=sys.stderr)
         return 2
 
-    agent = EverAfterAgent(
+    agent = EverVowAgent(
         base_url=base_url,
         token=token,
         printer_name=printer_name,

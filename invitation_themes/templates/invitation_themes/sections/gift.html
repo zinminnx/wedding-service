@@ -1,7 +1,10 @@
 <section class="section gift-card" id="gift">
-    <p class="script">Wedding Gifts</p>
-    <h2>Your presence means the most</h2>
-    <p class="gift-intro">A gift is completely optional. Your choice never affects your RSVP, entry pass, or return gift.</p>
+    <div class="section-heading-block">
+        <p class="script">Wedding Gifts</p>
+        <h2>Your presence means the most</h2>
+        <p class="gift-intro">A gift is completely optional. Your choice never affects your RSVP, entry pass, or return gift.</p>
+    </div>
+
     {% if gift_saved %}<div class="success-banner">✓ Thank you. Your gift preference has been saved.</div>{% endif %}
     {% if gift_error %}<div class="error-banner">{{ gift_error }}</div>{% endif %}
 
@@ -10,8 +13,11 @@
             {% for method in payment_methods %}
             <article class="guest-payment-card">
                 <div class="guest-method-top">
-                    <span class="guest-method-badge">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</span>
-                    <strong>{{ method.name }}</strong>
+                    <span class="guest-method-logo" aria-hidden="true">{{ method.name|slice:':2'|upper }}</span>
+                    <div class="guest-method-title">
+                        <span class="guest-method-badge">{% if method.method_type == 'BANK' %}BANK{% else %}PAY{% endif %}</span>
+                        <strong>{{ method.name }}</strong>
+                    </div>
                 </div>
                 {% if method.qr_image %}<img class="payment-qr" src="{{ method.qr_image.url }}" alt="{{ method.name }} QR">{% endif %}
                 <div class="guest-method-details">
@@ -24,31 +30,49 @@
         </div>
     {% endif %}
 
-    <form method="post" class="gift-declare-form">
+    <form method="post" class="gift-declare-form" data-gift-form>
         {% csrf_token %}
         <input type="hidden" name="form_type" value="gift">
+
         <div class="gift-choice-list">
             {% if gift_settings.allow_no_gift %}
-                <label><input type="radio" name="gift_choice" value="NONE" {% if gift_declaration.gift_choice == 'NONE' or not gift_declaration %}checked{% endif %}><span><b>No gift</b><small>That's absolutely okay.</small></span></label>
+                <label class="gift-choice-card">
+                    <input type="radio" name="gift_choice" value="NONE" {% if gift_declaration.gift_choice == 'NONE' or not gift_declaration %}checked{% endif %}>
+                    <span class="gift-choice-icon" aria-hidden="true">✓</span>
+                    <span class="gift-choice-copy"><b>No gift</b><small>That's absolutely okay.</small></span>
+                </label>
             {% endif %}
             {% if gift_settings.accept_physical_gift %}
-                <label><input type="radio" name="gift_choice" value="PHYSICAL" {% if gift_declaration.gift_choice == 'PHYSICAL' %}checked{% endif %}><span><b>Physical gift</b><small>I plan to bring a gift in person.</small></span></label>
+                <label class="gift-choice-card">
+                    <input type="radio" name="gift_choice" value="PHYSICAL" {% if gift_declaration.gift_choice == 'PHYSICAL' %}checked{% endif %}>
+                    <span class="gift-choice-icon" aria-hidden="true">🎁</span>
+                    <span class="gift-choice-copy"><b>Physical gift</b><small>I plan to bring a gift in person.</small></span>
+                </label>
             {% endif %}
             {% if gift_settings.accept_monetary_gift %}
                 {% for method in payment_methods %}
-                <label>
+                <label class="gift-choice-card">
                     <input type="radio" name="gift_choice" value="DIGITAL" data-digital-choice data-method-id="{{ method.id }}" {% if gift_declaration.gift_choice == 'DIGITAL' and gift_declaration.payment_method_record_id == method.id %}checked{% endif %}>
-                    <span><b>{{ method.name }}</b><small>I sent a gift using this {{ method.get_method_type_display|lower }} method.</small></span>
+                    <span class="gift-choice-icon gift-choice-provider" aria-hidden="true">{{ method.name|slice:':2'|upper }}</span>
+                    <span class="gift-choice-copy"><b>{{ method.name }}</b><small>I sent a gift using this {{ method.get_method_type_display|lower }} method.</small></span>
                 </label>
                 {% endfor %}
             {% endif %}
         </div>
+
         <input type="hidden" name="payment_method_id" value="{% if gift_declaration and gift_declaration.payment_method_record_id %}{{ gift_declaration.payment_method_record_id }}{% endif %}" data-payment-method-id>
-        <div class="digital-proof-fields">
-            <label><span>Amount <small>(optional)</small></span><input type="number" min="0" step="0.01" name="amount" value="{{ gift_declaration.amount|default:'' }}" placeholder="0.00"></label>
-            <label><span>Reference / note <small>(optional)</small></span><input type="text" name="payment_reference" value="{{ gift_declaration.payment_reference|default:'' }}" placeholder="Transaction reference"></label>
+
+        <div class="digital-proof-wrap" data-gift-proof>
+            <div class="digital-proof-fields">
+                <label><span>Amount <small>(optional)</small></span><input type="number" min="0" step="0.01" name="amount" value="{{ gift_declaration.amount|default:'' }}" placeholder="0.00"></label>
+                <label><span>Reference / note <small>(optional)</small></span><input type="text" name="payment_reference" value="{{ gift_declaration.payment_reference|default:'' }}" placeholder="Transaction reference"></label>
+            </div>
         </div>
-        <label class="note-field"><span>Gift note <small>(optional)</small></span><textarea name="gift_notes" rows="3" maxlength="255" placeholder="Any note for the couple...">{{ gift_declaration.notes|default:'' }}</textarea></label>
-        <button type="submit" class="secondary-action">Save Gift Preference</button>
+
+        <label class="note-field">
+            <span>Gift note <small>(optional)</small></span>
+            <textarea name="gift_notes" rows="3" maxlength="255" placeholder="Any note for the couple...">{{ gift_declaration.notes|default:'' }}</textarea>
+        </label>
+        <button type="submit" class="secondary-action"><span aria-hidden="true">🎁</span> Save Gift Preference</button>
     </form>
 </section>

@@ -3,6 +3,12 @@
     <p class="overline">You're invited to the wedding of</p>
     <h1>{{ wedding.groom_name|default:'Groom' }} <span>&</span> {{ wedding.bride_name|default:'Bride' }}</h1>
     {% if wedding.wedding_date %}<p class="date-line">{{ wedding.wedding_date|date:'D, d F Y' }}</p>{% endif %}
-    <div class="portrait-card"><div class="portrait-fallback"><span>{{ wedding.groom_name|slice:':1' }} ♥ {{ wedding.bride_name|slice:':1' }}</span></div></div>
+    <div class="portrait-card{% if invite_design.hero_image %} has-cover-photo{% endif %}">
+        {% if invite_design.hero_image %}
+            <img class="portrait-image" src="{% url 'invitations:hero_image' invitation.token %}" alt="{{ wedding.groom_name|default:'Groom' }} and {{ wedding.bride_name|default:'Bride' }}">
+        {% else %}
+            <div class="portrait-fallback"><span>{{ wedding.groom_name|slice:':1' }} ♥ {{ wedding.bride_name|slice:':1' }}</span></div>
+        {% endif %}
+    </div>
     <p class="hero-quote">{{ invite_design.hero_message }}</p>
 </header>

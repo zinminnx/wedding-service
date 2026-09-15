@@ -4,7 +4,7 @@ from security_hardening.qa import run_full_qa
 
 
 class Command(BaseCommand):
-    help = "Run non-destructive EverAfter release QA without creating a Django test database."
+    help = "Run non-destructive EverVow release QA without creating a Django test database."
 
     def add_arguments(self, parser):
         parser.add_argument("--quick", action="store_true", help="Skip deeper wedding-data/storage integrity scans.")
@@ -33,11 +33,11 @@ class Command(BaseCommand):
         counts = report.counts
         self.stdout.write("")
         self.stdout.write(
-            f"EverAfter QA summary: {counts['PASS']} PASS / {counts['WARN']} WARN / {counts['FAIL']} FAIL"
+            f"EverVow QA summary: {counts['PASS']} PASS / {counts['WARN']} WARN / {counts['FAIL']} FAIL"
         )
 
         if counts["FAIL"]:
-            raise CommandError("EverAfter system QA found blocking failures.")
+            raise CommandError("EverVow system QA found blocking failures.")
         if options["strict"] and counts["WARN"]:
-            raise CommandError("EverAfter system QA strict mode found warnings.")
-        self.stdout.write(self.style.SUCCESS("EverAfter system QA: PASS"))
+            raise CommandError("EverVow system QA strict mode found warnings.")
+        self.stdout.write(self.style.SUCCESS("EverVow system QA: PASS"))

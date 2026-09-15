@@ -1,4 +1,4 @@
-# Generated for EverAfter v11.2 Wedding Planner Workspace
+# Generated for EverVow v11.2 Wedding Planner Workspace
 
 from django.conf import settings
 from django.db import migrations, models
